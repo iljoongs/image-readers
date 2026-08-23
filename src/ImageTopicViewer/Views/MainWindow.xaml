@@ -29,11 +29,8 @@
 
             <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="#CCCCCC"/>
 
-            <!-- 메인 영역: 연속보기/단일보기는 M3, M7에서 추가 -->
-            <TextBlock Grid.Column="2" Text="{Binding MainAreaMessage}"
-                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                       TextAlignment="Center"
-                       Foreground="#888888"/>
+            <!-- 메인 영역: 연속보기 (07-ui-layout.md). 단일보기는 M7에서 추가 -->
+            <views:ContinuousPageView Grid.Column="2" DataContext="{Binding ContinuousPage}"/>
         </Grid>
     </Grid>
 </Window>

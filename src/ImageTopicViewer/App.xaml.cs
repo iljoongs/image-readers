@@ -29,7 +29,10 @@ public partial class App : Application
         }
 
         var topicRepository = new FileSystemTopicRepository(settingsService.Settings.DataFolderPath!);
-        var mainViewModel = new MainViewModel(topicRepository);
+        var imageStorageService = new FileSystemImageStorageService();
+        var imageSourceProvider = new ImageSourceProvider();
+
+        var mainViewModel = new MainViewModel(topicRepository, imageStorageService, imageSourceProvider);
         var mainWindow = new MainWindow(mainViewModel);
         mainWindow.Show();
     }
