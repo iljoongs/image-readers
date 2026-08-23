@@ -16,6 +16,9 @@ public partial class MainViewModel : ObservableObject
 
     public string ViewModeToggleLabel => IsSingleView ? "연속보기로 전환" : "단일보기로 전환";
 
+    /// <summary>타이틀바에 현재 뷰 모드를 표시한다.</summary>
+    public string WindowTitle => $"ImageTopicViewer ({(IsSingleView ? "단일보기" : "연속보기")})";
+
     public MainViewModel(
         ITopicRepository topicRepository,
         IImageStorageService imageStorageService,
@@ -27,7 +30,11 @@ public partial class MainViewModel : ObservableObject
         TopicTree.PropertyChanged += OnTopicTreePropertyChanged;
     }
 
-    partial void OnIsSingleViewChanged(bool value) => OnPropertyChanged(nameof(ViewModeToggleLabel));
+    partial void OnIsSingleViewChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ViewModeToggleLabel));
+        OnPropertyChanged(nameof(WindowTitle));
+    }
 
     /// <summary>앱 시작 시 마지막 세션 상태를 복원한다 (02-architecture.md "세션 상태 저장/복원").</summary>
     public void RestoreSession(AppSettings settings)

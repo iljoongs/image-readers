@@ -8,14 +8,33 @@ using ImageTopicViewer.Services;
 
 namespace ImageTopicViewer.ViewModels;
 
+/// <summary>이미지 표시 폭(px) 선택지. Width가 null이면 원본 크기(제약 없음)를 뜻한다.</summary>
+public sealed record ZoomOption(string Label, double? Width);
+
 public partial class ContinuousPageViewModel : ObservableObject
 {
+    /// <summary>확대/축소 콤보박스 항목이자 Ctrl+스크롤이 오르내리는 단계 목록 (연속보기/단일보기 공유).</summary>
+    public static readonly IReadOnlyList<ZoomOption> ZoomOptions = new List<ZoomOption>
+    {
+        new("원본", null),
+        new("400px", 400),
+        new("600px", 600),
+        new("800px", 800),
+        new("1000px", 1000),
+        new("1200px", 1200),
+        new("1400px", 1400),
+    };
+
     private readonly IImageStorageService _imageStorageService;
     private readonly IImageSourceProvider _imageSourceProvider;
     private CancellationTokenSource? _loadCts;
     private TopicNode? _currentMinorTopic;
 
     public ObservableCollection<ImageItem> Images { get; } = new();
+
+    /// <summary>현재 표시 폭(px). null이면 원본 크기 (04-05번 요청: 확대/축소, 콤보박스와 Ctrl+스크롤이 값을 공유).</summary>
+    [ObservableProperty]
+    private double? _zoomWidth = 800;
 
     [ObservableProperty]
     private bool _showNoSelectionMessage = true;
@@ -50,6 +69,37 @@ public partial class ContinuousPageViewModel : ObservableObject
         {
             CurrentIndex = index;
         }
+    }
+
+    /// <summary>목록의 다음 단계로 확대한다. 목록 맨 위(1400px)에서 한 번 더 하면 원본으로 넘어간다.</summary>
+    [RelayCommand]
+    private void ZoomIn()
+    {
+        var presets = ZoomOptions.Where(o => o.Width.HasValue).Select(o => o.Width!.Value).ToList();
+
+        if (ZoomWidth is null)
+        {
+            return; // 이미 원본(목록의 맨 위) 상태
+        }
+
+        var index = presets.IndexOf(ZoomWidth.Value);
+        ZoomWidth = index < 0 || index == presets.Count - 1 ? null : presets[index + 1];
+    }
+
+    /// <summary>목록의 이전 단계로 축소한다. 원본 상태에서 하면 가장 큰 프리셋(1400px)으로 넘어간다.</summary>
+    [RelayCommand]
+    private void ZoomOut()
+    {
+        var presets = ZoomOptions.Where(o => o.Width.HasValue).Select(o => o.Width!.Value).ToList();
+
+        if (ZoomWidth is null)
+        {
+            ZoomWidth = presets[^1];
+            return;
+        }
+
+        var index = presets.IndexOf(ZoomWidth.Value);
+        ZoomWidth = index <= 0 ? presets[0] : presets[index - 1];
     }
 
     [RelayCommand]

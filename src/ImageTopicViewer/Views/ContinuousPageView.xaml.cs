@@ -2,9 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using ImageTopicViewer.Models;
-using ImageTopicViewer.Services;
 using ImageTopicViewer.ViewModels;
 
 namespace ImageTopicViewer.Views;
@@ -45,11 +43,7 @@ public partial class ContinuousPageView : UserControl
 
     private void Grid_DragOver(object sender, DragEventArgs e)
     {
-        var canAccept = e.Data.GetDataPresent(DataFormats.FileDrop)
-            || e.Data.GetDataPresent(DataFormats.Bitmap)
-            || VirtualFileDropReader.HasVirtualFiles(e.Data);
-
-        e.Effects = canAccept ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Effects = ImageDropHelper.CanAccept(e.Data) ? DragDropEffects.Copy : DragDropEffects.None;
         e.Handled = true;
     }
 
@@ -60,29 +54,32 @@ public partial class ContinuousPageView : UserControl
             return;
         }
 
-        var inputs = new List<ImageSourceInput>();
-
-        if (e.Data.GetDataPresent(DataFormats.FileDrop)
-            && e.Data.GetData(DataFormats.FileDrop) is string[] filePaths)
-        {
-            inputs.AddRange(filePaths.Select(path => (ImageSourceInput)new ImageSourceInput.FromFile(path)));
-        }
-        else if (e.Data.GetDataPresent(DataFormats.Bitmap)
-                 && e.Data.GetData(DataFormats.Bitmap) is BitmapSource bitmap)
-        {
-            inputs.Add(new ImageSourceInput.FromBitmap(bitmap));
-        }
-        else
-        {
-            // 웹 브라우저 등 실제 로컬 파일이 없는 "가상 파일" 드래그 (05-image-features.md).
-            var streams = VirtualFileDropReader.ReadImageStreams(e.Data);
-            inputs.AddRange(streams.Select(s => (ImageSourceInput)new ImageSourceInput.FromStream(s)));
-        }
-
+        var inputs = ImageDropHelper.ExtractInputs(e.Data);
         if (inputs.Count > 0)
         {
             viewModel.AddDroppedImages(inputs);
         }
+    }
+
+    // ----- 확대/축소 (Ctrl+스크롤) -----
+
+    private void Root_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (Keyboard.Modifiers != ModifierKeys.Control || DataContext is not ContinuousPageViewModel viewModel)
+        {
+            return;
+        }
+
+        if (e.Delta > 0)
+        {
+            viewModel.ZoomInCommand.Execute(null);
+        }
+        else
+        {
+            viewModel.ZoomOutCommand.Execute(null);
+        }
+
+        e.Handled = true;
     }
 
     // ----- 페이지 내 순서 변경 (드래그 재정렬) -----
