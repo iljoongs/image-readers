@@ -15,6 +15,9 @@
                                 <MenuItem Header="소주제 추가"
                                           Click="AddMinorTopicMenuItem_Click"
                                           Visibility="{Binding IsMajorTopic, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                <Separator Visibility="{Binding IsMajorTopic, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                <MenuItem Header="이름변경" Click="RenameTopicMenuItem_Click"/>
+                                <MenuItem Header="삭제" Click="DeleteTopicMenuItem_Click"/>
                             </ContextMenu>
                         </TextBlock.ContextMenu>
                     </TextBlock>

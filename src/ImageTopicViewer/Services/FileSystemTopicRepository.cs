@@ -24,21 +24,11 @@ public class FileSystemTopicRepository : ITopicRepository
 
         foreach (var majorDir in Directory.GetDirectories(_dataFolderPath).OrderBy(Path.GetFileName))
         {
-            var majorNode = new TopicNode
-            {
-                Name = Path.GetFileName(majorDir),
-                FullPath = majorDir,
-                IsMajorTopic = true,
-            };
+            var majorNode = new TopicNode(Path.GetFileName(majorDir), majorDir, isMajorTopic: true);
 
             foreach (var minorDir in Directory.GetDirectories(majorDir).OrderBy(Path.GetFileName))
             {
-                majorNode.Children.Add(new TopicNode
-                {
-                    Name = Path.GetFileName(minorDir),
-                    FullPath = minorDir,
-                    IsMajorTopic = false,
-                });
+                majorNode.Children.Add(new TopicNode(Path.GetFileName(minorDir), minorDir, isMajorTopic: false));
             }
 
             topics.Add(majorNode);
@@ -61,7 +51,7 @@ public class FileSystemTopicRepository : ITopicRepository
         var path = Path.Combine(_dataFolderPath, name);
         Directory.CreateDirectory(path);
 
-        return new TopicNode { Name = name, FullPath = path, IsMajorTopic = true };
+        return new TopicNode(name, path, isMajorTopic: true);
     }
 
     public TopicNode CreateMinorTopic(TopicNode majorTopic, string name)
@@ -76,8 +66,98 @@ public class FileSystemTopicRepository : ITopicRepository
         var path = Path.Combine(majorTopic.FullPath, name);
         Directory.CreateDirectory(path);
 
-        var node = new TopicNode { Name = name, FullPath = path, IsMajorTopic = false };
+        var node = new TopicNode(name, path, isMajorTopic: false);
         majorTopic.Children.Add(node);
         return node;
+    }
+
+    public void DeleteTopic(TopicNode node)
+    {
+        RecycleBin.Send(node.FullPath);
+    }
+
+    public void RenameTopic(TopicNode node, string newName)
+    {
+        var parentDirPath = Directory.GetParent(node.FullPath)!.FullName;
+        var siblingNames = Directory.GetDirectories(parentDirPath)
+            .Select(Path.GetFileName)
+            .Where(n => !string.Equals(n, node.Name, StringComparison.Ordinal));
+
+        if (!TopicNameValidator.IsValid(newName, siblingNames!, out var error))
+        {
+            throw new ArgumentException(error);
+        }
+
+        if (node.IsMajorTopic)
+        {
+            RenameMajorTopic(node, newName);
+        }
+        else
+        {
+            RenameMinorTopic(node, newName);
+        }
+    }
+
+    private static void RenameMajorTopic(TopicNode majorNode, string newName)
+    {
+        var oldName = majorNode.Name;
+        var oldPath = majorNode.FullPath;
+        var newPath = Path.Combine(Path.GetDirectoryName(oldPath)!, newName);
+
+        Directory.Move(oldPath, newPath);
+
+        majorNode.Name = newName;
+        majorNode.FullPath = newPath;
+
+        foreach (var minorNode in majorNode.Children)
+        {
+            var newMinorPath = Path.Combine(newPath, minorNode.Name);
+            minorNode.FullPath = newMinorPath;
+
+            RenameImageFilePrefix(
+                newMinorPath,
+                oldPrefix: $"{oldName}_{minorNode.Name}_",
+                newPrefix: $"{newName}_{minorNode.Name}_");
+        }
+    }
+
+    private static void RenameMinorTopic(TopicNode minorNode, string newName)
+    {
+        var oldName = minorNode.Name;
+        var oldPath = minorNode.FullPath;
+        var majorName = Directory.GetParent(oldPath)!.Name;
+        var newPath = Path.Combine(Path.GetDirectoryName(oldPath)!, newName);
+
+        Directory.Move(oldPath, newPath);
+
+        minorNode.Name = newName;
+        minorNode.FullPath = newPath;
+
+        RenameImageFilePrefix(
+            newPath,
+            oldPrefix: $"{majorName}_{oldName}_",
+            newPrefix: $"{majorName}_{newName}_");
+    }
+
+    /// <summary>폴더 내 이미지 파일명의 {대주제}_{소주제}_ 접두사를 새 이름으로 일괄 재작성한다. 번호 부분은 그대로 유지된다.</summary>
+    private static void RenameImageFilePrefix(string folderPath, string oldPrefix, string newPrefix)
+    {
+        if (!Directory.Exists(folderPath))
+        {
+            return;
+        }
+
+        foreach (var filePath in Directory.GetFiles(folderPath, "*.png"))
+        {
+            var fileName = Path.GetFileName(filePath);
+            if (!fileName.StartsWith(oldPrefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var suffix = fileName[oldPrefix.Length..];
+            var newPath = Path.Combine(folderPath, newPrefix + suffix);
+            File.Move(filePath, newPath);
+        }
     }
 }

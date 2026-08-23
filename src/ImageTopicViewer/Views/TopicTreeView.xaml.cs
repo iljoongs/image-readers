@@ -28,4 +28,22 @@ public partial class TopicTreeView : UserControl
             viewModel.AddMinorTopicCommand.Execute(node);
         }
     }
+
+    private void RenameTopicMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is TopicTreeViewModel viewModel
+            && sender is MenuItem { DataContext: TopicNode node })
+        {
+            viewModel.RenameTopicCommand.Execute(node);
+        }
+    }
+
+    private void DeleteTopicMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is TopicTreeViewModel viewModel
+            && sender is MenuItem { DataContext: TopicNode node })
+        {
+            viewModel.DeleteTopicCommand.Execute(node);
+        }
+    }
 }
