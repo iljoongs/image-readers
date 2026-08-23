@@ -73,6 +73,7 @@ public class FileSystemImageStorageService : IImageStorageService
             {
                 ImageSourceInput.FromFile fromFile => DecodeFile(fromFile.SourceFilePath),
                 ImageSourceInput.FromBitmap fromBitmap => fromBitmap.Bitmap,
+                ImageSourceInput.FromStream fromStream => DecodeStream(fromStream.Content),
                 _ => null,
             };
         }
@@ -85,10 +86,18 @@ public class FileSystemImageStorageService : IImageStorageService
     private static BitmapSource DecodeFile(string filePath)
     {
         using var stream = File.OpenRead(filePath);
-        var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
-        var frame = decoder.Frames[0];
-        frame.Freeze();
-        return frame;
+        return DecodeStream(stream);
+    }
+
+    private static BitmapSource DecodeStream(Stream stream)
+    {
+        using (stream)
+        {
+            var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+            var frame = decoder.Frames[0];
+            frame.Freeze();
+            return frame;
+        }
     }
 
     private static void SaveAsPng(BitmapSource bitmap, string destinationPath)

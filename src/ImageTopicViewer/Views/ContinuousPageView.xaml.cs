@@ -4,6 +4,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ImageTopicViewer.Models;
+using ImageTopicViewer.Services;
 using ImageTopicViewer.ViewModels;
 
 namespace ImageTopicViewer.Views;
@@ -44,9 +45,11 @@ public partial class ContinuousPageView : UserControl
 
     private void Grid_DragOver(object sender, DragEventArgs e)
     {
-        e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) || e.Data.GetDataPresent(DataFormats.Bitmap)
-            ? DragDropEffects.Copy
-            : DragDropEffects.None;
+        var canAccept = e.Data.GetDataPresent(DataFormats.FileDrop)
+            || e.Data.GetDataPresent(DataFormats.Bitmap)
+            || VirtualFileDropReader.HasVirtualFiles(e.Data);
+
+        e.Effects = canAccept ? DragDropEffects.Copy : DragDropEffects.None;
         e.Handled = true;
     }
 
@@ -57,15 +60,28 @@ public partial class ContinuousPageView : UserControl
             return;
         }
 
+        var inputs = new List<ImageSourceInput>();
+
         if (e.Data.GetDataPresent(DataFormats.FileDrop)
             && e.Data.GetData(DataFormats.FileDrop) is string[] filePaths)
         {
-            viewModel.AddDroppedFiles(filePaths);
+            inputs.AddRange(filePaths.Select(path => (ImageSourceInput)new ImageSourceInput.FromFile(path)));
         }
         else if (e.Data.GetDataPresent(DataFormats.Bitmap)
                  && e.Data.GetData(DataFormats.Bitmap) is BitmapSource bitmap)
         {
-            viewModel.AddDroppedBitmap(bitmap);
+            inputs.Add(new ImageSourceInput.FromBitmap(bitmap));
+        }
+        else
+        {
+            // 웹 브라우저 등 실제 로컬 파일이 없는 "가상 파일" 드래그 (05-image-features.md).
+            var streams = VirtualFileDropReader.ReadImageStreams(e.Data);
+            inputs.AddRange(streams.Select(s => (ImageSourceInput)new ImageSourceInput.FromStream(s)));
+        }
+
+        if (inputs.Count > 0)
+        {
+            viewModel.AddDroppedImages(inputs);
         }
     }
 

@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
-using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ImageTopicViewer.Models;
@@ -130,28 +129,15 @@ public partial class ContinuousPageViewModel : ObservableObject
         }
     }
 
-    public void AddDroppedFiles(IReadOnlyList<string> filePaths)
+    /// <summary>드롭된 이미지 소스 목록을 추가한다 (로컬 파일/비트맵/가상 파일 스트림 등, 05-image-features.md 참조).</summary>
+    public void AddDroppedImages(IReadOnlyList<ImageSourceInput> inputs)
     {
-        if (_currentMinorTopic is null || filePaths.Count == 0)
+        if (_currentMinorTopic is null || inputs.Count == 0)
         {
             return;
         }
-
-        IReadOnlyList<ImageSourceInput> inputs = filePaths
-            .Select(path => (ImageSourceInput)new ImageSourceInput.FromFile(path))
-            .ToList();
 
         ProcessAdd(inputs);
-    }
-
-    public void AddDroppedBitmap(BitmapSource bitmap)
-    {
-        if (_currentMinorTopic is null)
-        {
-            return;
-        }
-
-        ProcessAdd(new List<ImageSourceInput> { new ImageSourceInput.FromBitmap(bitmap) });
     }
 
     public void MoveImage(ImageItem draggedItem, ImageItem targetItem)
