@@ -10,9 +10,15 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- 상단 툴바 (연속보기/단일보기 토글은 M7에서 추가) -->
+        <!-- 상단 툴바: 연속보기/단일보기 토글 (06-view-modes.md) -->
         <Border Grid.Row="0" Padding="8" BorderBrush="#CCCCCC" BorderThickness="0,0,0,1">
-            <TextBlock Text="ImageTopicViewer" FontWeight="Bold"/>
+            <DockPanel>
+                <TextBlock Text="ImageTopicViewer" FontWeight="Bold" VerticalAlignment="Center"/>
+                <Button DockPanel.Dock="Right" HorizontalAlignment="Right"
+                        Content="{Binding ViewModeToggleLabel}"
+                        Command="{Binding ToggleViewModeCommand}"
+                        Padding="8,4"/>
+            </DockPanel>
         </Border>
 
         <Grid Grid.Row="1">
@@ -29,8 +35,13 @@
 
             <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="#CCCCCC"/>
 
-            <!-- 메인 영역: 연속보기 (07-ui-layout.md). 단일보기는 M7에서 추가 -->
-            <views:ContinuousPageView Grid.Column="2" DataContext="{Binding ContinuousPage}"/>
+            <!-- 메인 영역: 연속보기/단일보기 (06-view-modes.md, 07-ui-layout.md). 둘 다 같은 ContinuousPageViewModel을 공유해 이미지 위치를 유지한다. -->
+            <Grid Grid.Column="2">
+                <views:ContinuousPageView DataContext="{Binding ContinuousPage}"
+                                          Visibility="{Binding DataContext.IsSingleView, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                <views:SingleImageView DataContext="{Binding ContinuousPage}"
+                                       Visibility="{Binding DataContext.IsSingleView, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibilityConverter}}"/>
+            </Grid>
         </Grid>
     </Grid>
 </Window>

@@ -4,5 +4,6 @@
              xmlns:conv="clr-namespace:ImageTopicViewer.Converters">
     <Application.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
     </Application.Resources>
 </Application>

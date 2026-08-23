@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using ImageTopicViewer.Models;
 using ImageTopicViewer.Services;
 
@@ -26,10 +27,48 @@ public partial class ContinuousPageViewModel : ObservableObject
     [ObservableProperty]
     private bool _showImages;
 
+    /// <summary>연속보기/단일보기가 공유하는 "현재 이미지" 위치. 모드 전환 시 유지된다 (06-view-modes.md 공통 절).</summary>
+    [ObservableProperty]
+    private int _currentIndex;
+
+    /// <summary>단일보기가 표시할 현재 이미지. Images나 CurrentIndex가 바뀌면 갱신된다.</summary>
+    public ImageItem? CurrentItem =>
+        CurrentIndex >= 0 && CurrentIndex < Images.Count ? Images[CurrentIndex] : null;
+
     public ContinuousPageViewModel(IImageStorageService imageStorageService, IImageSourceProvider imageSourceProvider)
     {
         _imageStorageService = imageStorageService;
         _imageSourceProvider = imageSourceProvider;
+    }
+
+    partial void OnCurrentIndexChanged(int value) => OnPropertyChanged(nameof(CurrentItem));
+
+    /// <summary>연속보기에서 특정 이미지를 클릭했을 때 "현재 이미지"로 지정한다.</summary>
+    public void SetCurrentIndex(ImageItem item)
+    {
+        var index = Images.IndexOf(item);
+        if (index >= 0)
+        {
+            CurrentIndex = index;
+        }
+    }
+
+    [RelayCommand]
+    private void GoToPreviousImage()
+    {
+        if (CurrentIndex > 0)
+        {
+            CurrentIndex--;
+        }
+    }
+
+    [RelayCommand]
+    private void GoToNextImage()
+    {
+        if (CurrentIndex < Images.Count - 1)
+        {
+            CurrentIndex++;
+        }
     }
 
     public void LoadSubtopic(TopicNode? minorTopic)
@@ -37,12 +76,14 @@ public partial class ContinuousPageViewModel : ObservableObject
         _currentMinorTopic = minorTopic;
         _loadCts?.Cancel();
         Images.Clear();
+        CurrentIndex = 0;
 
         if (minorTopic is null)
         {
             ShowNoSelectionMessage = true;
             ShowEmptyMessage = false;
             ShowImages = false;
+            OnPropertyChanged(nameof(CurrentItem));
             return;
         }
 
@@ -55,6 +96,7 @@ public partial class ContinuousPageViewModel : ObservableObject
         ShowNoSelectionMessage = false;
         ShowEmptyMessage = items.Count == 0;
         ShowImages = items.Count > 0;
+        OnPropertyChanged(nameof(CurrentItem));
 
         _loadCts = new CancellationTokenSource();
         _ = LoadImagesAsync(items, _loadCts.Token);
@@ -128,6 +170,7 @@ public partial class ContinuousPageViewModel : ObservableObject
 
         Images.Move(oldIndex, newIndex);
         _imageStorageService.Renumber(_currentMinorTopic, Images.ToList());
+        OnPropertyChanged(nameof(CurrentItem));
     }
 
     public void RequestDeleteImage(ImageItem item)
@@ -167,6 +210,15 @@ public partial class ContinuousPageViewModel : ObservableObject
 
         ShowEmptyMessage = Images.Count == 0;
         ShowImages = Images.Count > 0;
+
+        if (CurrentIndex >= Images.Count)
+        {
+            CurrentIndex = Math.Max(0, Images.Count - 1);
+        }
+        else
+        {
+            OnPropertyChanged(nameof(CurrentItem));
+        }
     }
 
     private void ProcessAdd(IReadOnlyList<ImageSourceInput> inputs)

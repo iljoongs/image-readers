@@ -53,9 +53,16 @@ public partial class ContinuousPageView : UserControl
     private void ImageItemBorder_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         _dragStartPoint = e.GetPosition(null);
+
         if (sender is IInputElement element)
         {
             Keyboard.Focus(element);
+        }
+
+        if (DataContext is ContinuousPageViewModel viewModel
+            && sender is FrameworkElement { DataContext: ImageItem item })
+        {
+            viewModel.SetCurrentIndex(item);
         }
     }
 
