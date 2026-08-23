@@ -1,7 +1,7 @@
 <UserControl x:Class="ImageTopicViewer.Views.SingleImageView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid x:Name="Root" Background="Black" Focusable="True"
+    <Grid x:Name="Root" Background="White" Focusable="True"
           PreviewKeyDown="Root_PreviewKeyDown"
           IsVisibleChanged="Root_IsVisibleChanged">
 
@@ -26,7 +26,7 @@
 
                 <Border x:Name="PreviousArea" Grid.Column="0" Background="Transparent" Cursor="Hand"
                         MouseLeftButtonUp="PreviousArea_MouseLeftButtonUp">
-                    <TextBlock Text="&#8249;" FontSize="56" Foreground="White"
+                    <TextBlock Text="&#8249;" FontSize="56" Foreground="Black"
                                HorizontalAlignment="Left" Margin="24,0,0,0" VerticalAlignment="Center"
                                IsHitTestVisible="False" Opacity="0">
                         <TextBlock.Style>
@@ -43,7 +43,7 @@
 
                 <Border x:Name="NextArea" Grid.Column="1" Background="Transparent" Cursor="Hand"
                         MouseLeftButtonUp="NextArea_MouseLeftButtonUp">
-                    <TextBlock Text="&#8250;" FontSize="56" Foreground="White"
+                    <TextBlock Text="&#8250;" FontSize="56" Foreground="Black"
                                HorizontalAlignment="Right" Margin="0,0,24,0" VerticalAlignment="Center"
                                IsHitTestVisible="False" Opacity="0">
                         <TextBlock.Style>
