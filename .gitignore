@@ -1,10 +1,14 @@
-## .NET / Visual Studio
+# ===== .NET / C# / WPF =====
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
 
 # Build results
 [Dd]ebug/
-[Dd]ebugPublic/
 [Rr]elease/
-[Rr]eleases/
 x64/
 x86/
 [Ww][Ii][Nn]32/
@@ -20,16 +24,12 @@ msbuild.wrn
 
 # Visual Studio
 .vs/
-*.user
-*.userosscache
-*.suo
-*.userprefs
-
-# Rider
-.idea/
-
-# VS Code
-.vscode/
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
 
 # NuGet
 *.nupkg
@@ -39,21 +39,31 @@ msbuild.wrn
 *.nuget.props
 *.nuget.targets
 
-# Test results
-[Tt]est[Rr]esult*/
-*.trx
-*.coverage
-*.coveragexml
+# ReSharper / Rider
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+.idea/
 
-# ClickOnce
-publish/
-*.publish.xml
-*.pubxml
-*.pubxml.user
-*.publishproj
+# ===== VS Code =====
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
 
-# Others
+# ===== OS 파일 =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== 프로젝트 로컬 데이터 =====
+# (.data/ 폴더 구조 자체는 유지하되, 실제 사용자 데이터 파일은 제외하고 싶다면 아래 주석 해제)
+# .data/*.json
+# .data/*.dat
+
+# ===== 로그 / 임시 파일 =====
 *.log
 *.tmp
 *.bak
-*.DotSettings.user
