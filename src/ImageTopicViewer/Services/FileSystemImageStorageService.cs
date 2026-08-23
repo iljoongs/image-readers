@@ -16,7 +16,7 @@ public class FileSystemImageStorageService : IImageStorageService
         // 파일명 규칙(03-data-storage.md): {대주제}_{소주제}_{3자리 번호}.png → 문자열 정렬이 곧 번호 순서.
         return Directory.GetFiles(minorTopic.FullPath, "*.png")
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)
-            .Select(path => new ImageItem { FullPath = path, FileName = Path.GetFileName(path) })
+            .Select(path => new ImageItem(path, Path.GetFileName(path)))
             .ToList();
     }
 
@@ -108,5 +108,33 @@ public class FileSystemImageStorageService : IImageStorageService
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
         }
+    }
+
+    public void Renumber(TopicNode minorTopic, IReadOnlyList<ImageItem> orderedItems)
+    {
+        var majorTopicName = Directory.GetParent(minorTopic.FullPath)!.Name;
+
+        // 1단계: 번호 충돌 방지를 위해 전부 임시 파일명으로 변경 (03-data-storage.md).
+        var tempPaths = new List<string>(orderedItems.Count);
+        foreach (var item in orderedItems)
+        {
+            var tempPath = Path.Combine(minorTopic.FullPath, $".tmp_{Guid.NewGuid():N}.png");
+            File.Move(item.FullPath, tempPath);
+            tempPaths.Add(tempPath);
+        }
+
+        // 2단계: 새 순서대로 001, 002... 최종 파일명으로 변경.
+        for (var i = 0; i < orderedItems.Count; i++)
+        {
+            var fileName = $"{majorTopicName}_{minorTopic.Name}_{(i + 1):000}.png";
+            var finalPath = Path.Combine(minorTopic.FullPath, fileName);
+            File.Move(tempPaths[i], finalPath);
+            orderedItems[i].UpdatePath(finalPath, fileName);
+        }
+    }
+
+    public void DeleteToRecycleBin(ImageItem item)
+    {
+        RecycleBin.Send(item.FullPath);
     }
 }

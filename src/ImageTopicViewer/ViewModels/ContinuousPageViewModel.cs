@@ -112,6 +112,63 @@ public partial class ContinuousPageViewModel : ObservableObject
         ProcessAdd(new List<ImageSourceInput> { new ImageSourceInput.FromBitmap(bitmap) });
     }
 
+    public void MoveImage(ImageItem draggedItem, ImageItem targetItem)
+    {
+        if (_currentMinorTopic is null)
+        {
+            return;
+        }
+
+        var oldIndex = Images.IndexOf(draggedItem);
+        var newIndex = Images.IndexOf(targetItem);
+        if (oldIndex < 0 || newIndex < 0 || oldIndex == newIndex)
+        {
+            return;
+        }
+
+        Images.Move(oldIndex, newIndex);
+        _imageStorageService.Renumber(_currentMinorTopic, Images.ToList());
+    }
+
+    public void RequestDeleteImage(ImageItem item)
+    {
+        if (_currentMinorTopic is null)
+        {
+            return;
+        }
+
+        var confirm = MessageBox.Show(
+            $"'{item.FileName}' 이미지를 삭제하시겠습니까? (휴지통으로 이동됩니다)",
+            "이미지 삭제",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (confirm != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        try
+        {
+            _imageStorageService.DeleteToRecycleBin(item);
+        }
+        catch (IOException ex)
+        {
+            MessageBox.Show(ex.Message, "이미지 삭제 실패", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        Images.Remove(item);
+
+        if (Images.Count > 0)
+        {
+            _imageStorageService.Renumber(_currentMinorTopic, Images.ToList());
+        }
+
+        ShowEmptyMessage = Images.Count == 0;
+        ShowImages = Images.Count > 0;
+    }
+
     private void ProcessAdd(IReadOnlyList<ImageSourceInput> inputs)
     {
         var minorTopic = _currentMinorTopic!;
