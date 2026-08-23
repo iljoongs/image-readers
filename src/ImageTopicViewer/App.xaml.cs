@@ -28,7 +28,8 @@ public partial class App : Application
             settingsService.Save();
         }
 
-        var mainViewModel = new MainViewModel(settingsService);
+        var topicRepository = new FileSystemTopicRepository(settingsService.Settings.DataFolderPath!);
+        var mainViewModel = new MainViewModel(topicRepository);
         var mainWindow = new MainWindow(mainViewModel);
         mainWindow.Show();
     }

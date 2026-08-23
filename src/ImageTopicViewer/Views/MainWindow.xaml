@@ -1,6 +1,7 @@
 <Window x:Class="ImageTopicViewer.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:ImageTopicViewer.Views"
         Title="ImageTopicViewer"
         Width="1000" Height="700">
     <Grid>
@@ -21,19 +22,17 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- 좌측 패널: 주제 트리는 M2에서 추가, 지금은 데이터 폴더 경로만 표시 -->
+            <!-- 좌측 패널: 주제 트리 (04-topic-management.md) -->
             <Border Grid.Column="0" BorderBrush="#CCCCCC" BorderThickness="0,0,1,0">
-                <StackPanel Margin="8">
-                    <TextBlock Text="데이터 폴더" FontWeight="Bold" Margin="0,0,0,4"/>
-                    <TextBlock Text="{Binding DataFolderPath}" TextWrapping="Wrap"/>
-                </StackPanel>
+                <views:TopicTreeView DataContext="{Binding TopicTree}"/>
             </Border>
 
             <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="#CCCCCC"/>
 
             <!-- 메인 영역: 연속보기/단일보기는 M3, M7에서 추가 -->
-            <TextBlock Grid.Column="2" Text="좌측에서 주제를 선택하세요"
+            <TextBlock Grid.Column="2" Text="{Binding MainAreaMessage}"
                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                       TextAlignment="Center"
                        Foreground="#888888"/>
         </Grid>
     </Grid>
