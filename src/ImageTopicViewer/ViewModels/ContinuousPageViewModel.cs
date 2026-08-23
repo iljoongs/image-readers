@@ -232,7 +232,7 @@ public partial class ContinuousPageViewModel : ObservableObject
         if (result.FailedCount > 0)
         {
             MessageBox.Show(
-                $"{result.FailedCount}개 이미지는 지원하지 않는 형식이라 추가되지 않았습니다.",
+                $"{result.FailedCount}개 이미지를 추가하지 못했습니다. (지원하지 않는 형식이거나 파일을 읽을 수 없음)",
                 "이미지 추가",
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);

@@ -24,6 +24,15 @@ public partial class TopicTreeViewModel : ObservableObject
         Topics = repository.GetTopics();
     }
 
+    /// <summary>대주제 노드 클릭 → 하위 소주제 목록 펼침/표시 (04-topic-management.md).</summary>
+    partial void OnSelectedNodeChanged(TopicNode? value)
+    {
+        if (value is { IsMajorTopic: true })
+        {
+            value.IsExpanded = true;
+        }
+    }
+
     [RelayCommand]
     private void AddMajorTopic()
     {
