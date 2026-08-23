@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ImageTopicViewer.Models;
 using ImageTopicViewer.Services;
 
 namespace ImageTopicViewer.ViewModels;
@@ -27,6 +28,38 @@ public partial class MainViewModel : ObservableObject
     }
 
     partial void OnIsSingleViewChanged(bool value) => OnPropertyChanged(nameof(ViewModeToggleLabel));
+
+    /// <summary>앱 시작 시 마지막 세션 상태를 복원한다 (02-architecture.md "세션 상태 저장/복원").</summary>
+    public void RestoreSession(AppSettings settings)
+    {
+        TopicTree.SelectByName(settings.LastMajorTopicName, settings.LastMinorTopicName);
+        IsSingleView = settings.LastIsSingleView;
+
+        if (ContinuousPage.Images.Count > 0)
+        {
+            ContinuousPage.CurrentIndex = Math.Clamp(settings.LastImageIndex, 0, ContinuousPage.Images.Count - 1);
+        }
+    }
+
+    /// <summary>앱 종료 시 현재 상태를 설정 객체에 기록한다 (호출자가 저장을 수행한다).</summary>
+    public void CaptureSession(AppSettings settings)
+    {
+        var selected = TopicTree.SelectedNode;
+        if (selected is { IsMajorTopic: false })
+        {
+            var major = TopicTree.Topics.FirstOrDefault(t => t.Children.Contains(selected));
+            settings.LastMajorTopicName = major?.Name;
+            settings.LastMinorTopicName = selected.Name;
+        }
+        else
+        {
+            settings.LastMajorTopicName = null;
+            settings.LastMinorTopicName = null;
+        }
+
+        settings.LastIsSingleView = IsSingleView;
+        settings.LastImageIndex = ContinuousPage.CurrentIndex;
+    }
 
     [RelayCommand]
     private void ToggleViewMode() => IsSingleView = !IsSingleView;

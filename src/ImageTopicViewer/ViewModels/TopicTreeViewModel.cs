@@ -179,6 +179,40 @@ public partial class TopicTreeViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// 세션 복원용: 이름으로 소주제를 찾아 선택 상태로 만든다.
+    /// 대주제/소주제가 더 이상 존재하지 않으면 조용히 아무것도 선택하지 않는다 (02-architecture.md 복원 예외 처리).
+    /// </summary>
+    public void SelectByName(string? majorName, string? minorName)
+    {
+        if (majorName is null)
+        {
+            return;
+        }
+
+        var major = Topics.FirstOrDefault(t => t.Name == majorName);
+        if (major is null)
+        {
+            return;
+        }
+
+        major.IsExpanded = true;
+
+        if (minorName is null)
+        {
+            return;
+        }
+
+        var minor = major.Children.FirstOrDefault(c => c.Name == minorName);
+        if (minor is null)
+        {
+            return;
+        }
+
+        minor.IsSelected = true;
+        SelectedNode = minor;
+    }
+
     private IEnumerable<string> GetSiblingNames(TopicNode node)
     {
         var siblingCollection = node.IsMajorTopic

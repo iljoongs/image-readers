@@ -19,6 +19,27 @@ public partial class ContinuousPageView : UserControl
         InitializeComponent();
     }
 
+    // ----- 모드 전환/시작 시 공유 위치(CurrentIndex)로 스크롤 (06-view-modes.md 공통 절, 02-architecture.md 세션 복원) -----
+
+    private void Root_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (e.NewValue is true && DataContext is ContinuousPageViewModel viewModel)
+        {
+            ScrollToIndex(viewModel.CurrentIndex);
+        }
+    }
+
+    private void ScrollToIndex(int index)
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (ImagesItemsControl.ItemContainerGenerator.ContainerFromIndex(index) is FrameworkElement container)
+            {
+                container.BringIntoView();
+            }
+        }, System.Windows.Threading.DispatcherPriority.Background);
+    }
+
     // ----- 이미지 추가 (탐색기/브라우저 드롭) -----
 
     private void Grid_DragOver(object sender, DragEventArgs e)

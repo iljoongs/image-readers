@@ -33,7 +33,9 @@ public partial class App : Application
         var imageSourceProvider = new ImageSourceProvider();
 
         var mainViewModel = new MainViewModel(topicRepository, imageStorageService, imageSourceProvider);
-        var mainWindow = new MainWindow(mainViewModel);
+        mainViewModel.RestoreSession(settingsService.Settings);
+
+        var mainWindow = new MainWindow(mainViewModel, settingsService);
         mainWindow.Show();
     }
 }
