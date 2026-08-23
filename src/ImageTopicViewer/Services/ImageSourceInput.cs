@@ -1,0 +1,11 @@
+using System.Windows.Media.Imaging;
+
+namespace ImageTopicViewer.Services;
+
+/// <summary>드롭된 이미지의 출처. 로컬 파일이면 저장 후 원본을 삭제하고, 이미 디코딩된 비트맵(예: 브라우저 드래그드롭)이면 그대로 인코딩만 한다.</summary>
+public abstract record ImageSourceInput
+{
+    public sealed record FromFile(string SourceFilePath) : ImageSourceInput;
+
+    public sealed record FromBitmap(BitmapSource Bitmap) : ImageSourceInput;
+}

@@ -1,4 +1,5 @@
 using System.IO;
+using System.Windows.Media.Imaging;
 using ImageTopicViewer.Models;
 
 namespace ImageTopicViewer.Services;
@@ -17,5 +18,95 @@ public class FileSystemImageStorageService : IImageStorageService
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)
             .Select(path => new ImageItem { FullPath = path, FileName = Path.GetFileName(path) })
             .ToList();
+    }
+
+    public ImageAddResult AddImages(TopicNode minorTopic, IReadOnlyList<ImageSourceInput> inputs)
+    {
+        Directory.CreateDirectory(minorTopic.FullPath);
+
+        var majorTopicName = Directory.GetParent(minorTopic.FullPath)!.Name;
+        var nextIndex = Directory.GetFiles(minorTopic.FullPath, "*.png").Length + 1;
+
+        var succeeded = 0;
+        var failed = 0;
+
+        foreach (var input in inputs)
+        {
+            var bitmap = TryDecode(input);
+            if (bitmap is null)
+            {
+                failed++;
+                continue;
+            }
+
+            var fileName = $"{majorTopicName}_{minorTopic.Name}_{nextIndex:000}.png";
+            var destinationPath = Path.Combine(minorTopic.FullPath, fileName);
+
+            try
+            {
+                SaveAsPng(bitmap, destinationPath);
+            }
+            catch (IOException)
+            {
+                failed++;
+                continue;
+            }
+
+            if (input is ImageSourceInput.FromFile fromFile)
+            {
+                // 원본을 옮긴 것과 같은 효과: 새 PNG가 이미 저장되었으므로 삭제 실패는 추가 실패로 취급하지 않는다.
+                TryDeleteOriginal(fromFile.SourceFilePath);
+            }
+
+            nextIndex++;
+            succeeded++;
+        }
+
+        return new ImageAddResult(succeeded, failed);
+    }
+
+    private static BitmapSource? TryDecode(ImageSourceInput input)
+    {
+        try
+        {
+            return input switch
+            {
+                ImageSourceInput.FromFile fromFile => DecodeFile(fromFile.SourceFilePath),
+                ImageSourceInput.FromBitmap fromBitmap => fromBitmap.Bitmap,
+                _ => null,
+            };
+        }
+        catch (Exception ex) when (ex is NotSupportedException or FileFormatException or IOException or ArgumentException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    private static BitmapSource DecodeFile(string filePath)
+    {
+        using var stream = File.OpenRead(filePath);
+        var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+        var frame = decoder.Frames[0];
+        frame.Freeze();
+        return frame;
+    }
+
+    private static void SaveAsPng(BitmapSource bitmap, string destinationPath)
+    {
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        using var stream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write);
+        encoder.Save(stream);
+    }
+
+    private static void TryDeleteOriginal(string sourceFilePath)
+    {
+        try
+        {
+            File.Delete(sourceFilePath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+        }
     }
 }
