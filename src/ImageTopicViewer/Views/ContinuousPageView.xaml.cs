@@ -9,7 +9,7 @@ namespace ImageTopicViewer.Views;
 
 public partial class ContinuousPageView : UserControl
 {
-    private static readonly Brush DropHighlightBrush = new SolidColorBrush(Color.FromArgb(60, 0, 120, 215));
+    private static readonly Brush DropHighlightBrush = new SolidColorBrush(Color.FromArgb(120, 0, 120, 215));
 
     private Point _dragStartPoint;
 
@@ -135,7 +135,7 @@ public partial class ContinuousPageView : UserControl
     {
         if (e.Data.GetDataPresent(typeof(ImageItem)) && sender is Border border)
         {
-            border.BorderBrush = DropHighlightBrush;
+            border.Background = DropHighlightBrush;
         }
     }
 
@@ -143,7 +143,7 @@ public partial class ContinuousPageView : UserControl
     {
         if (sender is Border border)
         {
-            border.BorderBrush = Brushes.Transparent;
+            border.Background = Brushes.White;
         }
     }
 
@@ -151,7 +151,7 @@ public partial class ContinuousPageView : UserControl
     {
         if (sender is Border border)
         {
-            border.BorderBrush = Brushes.Transparent;
+            border.Background = Brushes.White;
         }
 
         if (DataContext is not ContinuousPageViewModel viewModel)

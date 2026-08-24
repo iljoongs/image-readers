@@ -19,7 +19,6 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Border Background="White"
-                                BorderThickness="2" BorderBrush="Transparent"
                                 Focusable="True"
                                 Margin="0"
                                 HorizontalAlignment="Center"
