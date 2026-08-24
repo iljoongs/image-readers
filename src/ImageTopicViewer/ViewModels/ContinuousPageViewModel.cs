@@ -17,6 +17,9 @@ public partial class ContinuousPageViewModel : ObservableObject
     public static readonly IReadOnlyList<ZoomOption> ZoomOptions = new List<ZoomOption>
     {
         new("원본", null),
+        new("50px", 50),
+        new("100px", 100),
+        new("200px", 200),
         new("400px", 400),
         new("600px", 600),
         new("800px", 800),
