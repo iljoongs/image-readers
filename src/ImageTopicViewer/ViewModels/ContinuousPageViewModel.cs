@@ -56,11 +56,22 @@ public partial class ContinuousPageViewModel : ObservableObject
     public ImageItem? CurrentItem =>
         CurrentIndex >= 0 && CurrentIndex < Images.Count ? Images[CurrentIndex] : null;
 
+    /// <summary>연속보기 화면(View)이 스크롤 위치를 맞추기 위해 구독하는 이벤트.</summary>
+    public event EventHandler? ScrollToTopRequested;
+
+    public event EventHandler? ScrollToBottomRequested;
+
     public ContinuousPageViewModel(IImageStorageService imageStorageService, IImageSourceProvider imageSourceProvider)
     {
         _imageStorageService = imageStorageService;
         _imageSourceProvider = imageSourceProvider;
     }
+
+    [RelayCommand]
+    private void ScrollToTop() => ScrollToTopRequested?.Invoke(this, EventArgs.Empty);
+
+    [RelayCommand]
+    private void ScrollToBottom() => ScrollToBottomRequested?.Invoke(this, EventArgs.Empty);
 
     partial void OnCurrentIndexChanged(int value) => OnPropertyChanged(nameof(CurrentItem));
 
@@ -129,6 +140,7 @@ public partial class ContinuousPageViewModel : ObservableObject
         _loadCts?.Cancel();
         Images.Clear();
         CurrentIndex = 0;
+        ScrollToTopRequested?.Invoke(this, EventArgs.Empty);
 
         if (minorTopic is null)
         {

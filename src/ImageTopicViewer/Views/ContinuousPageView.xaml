@@ -13,7 +13,8 @@
                    HorizontalAlignment="Center" VerticalAlignment="Center"
                    Foreground="#888888"/>
 
-        <ScrollViewer Visibility="{Binding ShowImages, Converter={StaticResource BoolToVisibilityConverter}}"
+        <ScrollViewer x:Name="ImagesScrollViewer"
+                      Visibility="{Binding ShowImages, Converter={StaticResource BoolToVisibilityConverter}}"
                       VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
             <ItemsControl x:Name="ImagesItemsControl" ItemsSource="{Binding Images}" Margin="16">
                 <ItemsControl.ItemTemplate>

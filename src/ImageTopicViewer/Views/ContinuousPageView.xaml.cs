@@ -16,6 +16,34 @@ public partial class ContinuousPageView : UserControl
     public ContinuousPageView()
     {
         InitializeComponent();
+        DataContextChanged += OnDataContextChanged;
+    }
+
+    private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (e.OldValue is ContinuousPageViewModel oldViewModel)
+        {
+            oldViewModel.ScrollToTopRequested -= OnScrollToTopRequested;
+            oldViewModel.ScrollToBottomRequested -= OnScrollToBottomRequested;
+        }
+
+        if (e.NewValue is ContinuousPageViewModel newViewModel)
+        {
+            newViewModel.ScrollToTopRequested += OnScrollToTopRequested;
+            newViewModel.ScrollToBottomRequested += OnScrollToBottomRequested;
+        }
+    }
+
+    // ----- 툴바의 맨 위/맨 아래 버튼, 소주제 선택 시 자동 맨 위 이동 (07-ui-layout.md, 06-view-modes.md) -----
+
+    private void OnScrollToTopRequested(object? sender, EventArgs e)
+    {
+        ImagesScrollViewer.ScrollToTop();
+    }
+
+    private void OnScrollToBottomRequested(object? sender, EventArgs e)
+    {
+        ImagesScrollViewer.ScrollToBottom();
     }
 
     // ----- 모드 전환/시작 시 공유 위치(CurrentIndex)로 스크롤 (06-view-modes.md 공통 절, 02-architecture.md 세션 복원) -----

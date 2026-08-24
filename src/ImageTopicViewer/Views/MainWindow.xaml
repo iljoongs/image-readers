@@ -28,6 +28,14 @@
                               SelectedValue="{Binding ContinuousPage.ZoomWidth, Mode=TwoWay}"
                               Width="90"/>
                 </StackPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="0,0,12,0"
+                            VerticalAlignment="Center"
+                            Visibility="{Binding IsSingleView, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                    <Button Content="맨 위로" Padding="8,4" Margin="0,0,4,0"
+                            Command="{Binding ContinuousPage.ScrollToTopCommand}"/>
+                    <Button Content="맨 아래로" Padding="8,4"
+                            Command="{Binding ContinuousPage.ScrollToBottomCommand}"/>
+                </StackPanel>
             </DockPanel>
         </Border>
 
