@@ -263,10 +263,29 @@ public partial class ContinuousPageViewModel : ObservableObject
     private void ProcessAdd(IReadOnlyList<ImageSourceInput> inputs)
     {
         var minorTopic = _currentMinorTopic!;
+        var previousCount = Images.Count;
         var result = _imageStorageService.AddImages(minorTopic, inputs);
 
-        // 새로 추가된 파일을 반영하고 비동기 로딩을 다시 트리거한다 (05-image-features.md).
-        LoadSubtopic(minorTopic);
+        // 목록 전체를 다시 그리면 스크롤 위치가 맨 위로 초기화되므로,
+        // 새로 추가된 항목만 뒤에 이어붙인다 (기존 이미지 순서는 05-image-features.md대로 유지됨).
+        var allItems = _imageStorageService.GetImages(minorTopic);
+        var newItems = allItems.Skip(previousCount).ToList();
+
+        foreach (var item in newItems)
+        {
+            Images.Add(item);
+        }
+
+        ShowNoSelectionMessage = false;
+        ShowEmptyMessage = Images.Count == 0;
+        ShowImages = Images.Count > 0;
+
+        if (newItems.Count > 0)
+        {
+            _loadCts?.Cancel();
+            _loadCts = new CancellationTokenSource();
+            _ = LoadImagesAsync(newItems, _loadCts.Token);
+        }
 
         if (result.FailedCount > 0)
         {
