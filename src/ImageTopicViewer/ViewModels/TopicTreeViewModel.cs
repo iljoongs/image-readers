@@ -18,6 +18,11 @@ public partial class TopicTreeViewModel : ObservableObject
     [ObservableProperty]
     private TopicNode? _selectedNode;
 
+    [ObservableProperty]
+    private bool _isSortDescending;
+
+    public string SortToggleLabel => IsSortDescending ? "오름차순 정렬" : "내림차순 정렬";
+
     public TopicTreeViewModel(ITopicRepository repository)
     {
         _repository = repository;
@@ -30,6 +35,37 @@ public partial class TopicTreeViewModel : ObservableObject
         if (value is { IsMajorTopic: true })
         {
             value.IsExpanded = true;
+        }
+    }
+
+    partial void OnIsSortDescendingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(SortToggleLabel));
+
+        SortCollection(Topics);
+        foreach (var major in Topics)
+        {
+            SortCollection(major.Children);
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleSortOrder() => IsSortDescending = !IsSortDescending;
+
+    /// <summary>이름 기준으로 정렬하되, ObservableCollection.Move로 재배치해 IsExpanded/IsSelected 등 상태를 보존한다.</summary>
+    private void SortCollection(ObservableCollection<TopicNode> collection)
+    {
+        var sorted = IsSortDescending
+            ? collection.OrderByDescending(n => n.Name, StringComparer.CurrentCulture).ToList()
+            : collection.OrderBy(n => n.Name, StringComparer.CurrentCulture).ToList();
+
+        for (var i = 0; i < sorted.Count; i++)
+        {
+            var currentIndex = collection.IndexOf(sorted[i]);
+            if (currentIndex != i)
+            {
+                collection.Move(currentIndex, i);
+            }
         }
     }
 
@@ -54,6 +90,7 @@ public partial class TopicTreeViewModel : ObservableObject
         {
             var node = _repository.CreateMajorTopic(dialog.InputText);
             Topics.Add(node);
+            SortCollection(Topics);
         }
         catch (ArgumentException ex)
         {
@@ -86,6 +123,7 @@ public partial class TopicTreeViewModel : ObservableObject
         try
         {
             _repository.CreateMinorTopic(majorTopic, dialog.InputText);
+            SortCollection(majorTopic.Children);
         }
         catch (ArgumentException ex)
         {
@@ -129,6 +167,15 @@ public partial class TopicTreeViewModel : ObservableObject
         {
             MessageBox.Show(ex.Message, "이름 변경 실패", MessageBoxButton.OK, MessageBoxImage.Error);
             return;
+        }
+
+        // 이름이 바뀌었으니 정렬 순서상 위치도 다시 맞춘다.
+        var siblingCollection = node.IsMajorTopic
+            ? Topics
+            : Topics.FirstOrDefault(t => t.Children.Contains(node))?.Children;
+        if (siblingCollection is not null)
+        {
+            SortCollection(siblingCollection);
         }
 
         // 이름 변경으로 현재 표시 중인 소주제의 경로가 바뀌었을 수 있으므로 페이지를 다시 로드하도록 알린다.
