@@ -56,8 +56,8 @@ public partial class TopicTreeViewModel : ObservableObject
     private void SortCollection(ObservableCollection<TopicNode> collection)
     {
         var sorted = IsSortDescending
-            ? collection.OrderByDescending(n => n.Name, StringComparer.CurrentCulture).ToList()
-            : collection.OrderBy(n => n.Name, StringComparer.CurrentCulture).ToList();
+            ? collection.OrderByDescending(n => n.Name, NaturalStringComparer.Instance).ToList()
+            : collection.OrderBy(n => n.Name, NaturalStringComparer.Instance).ToList();
 
         for (var i = 0; i < sorted.Count; i++)
         {

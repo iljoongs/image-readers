@@ -22,11 +22,11 @@ public class FileSystemTopicRepository : ITopicRepository
             return topics;
         }
 
-        foreach (var majorDir in Directory.GetDirectories(_dataFolderPath).OrderBy(Path.GetFileName))
+        foreach (var majorDir in Directory.GetDirectories(_dataFolderPath).OrderBy(Path.GetFileName, NaturalStringComparer.Instance))
         {
             var majorNode = new TopicNode(Path.GetFileName(majorDir), majorDir, isMajorTopic: true);
 
-            foreach (var minorDir in Directory.GetDirectories(majorDir).OrderBy(Path.GetFileName))
+            foreach (var minorDir in Directory.GetDirectories(majorDir).OrderBy(Path.GetFileName, NaturalStringComparer.Instance))
             {
                 majorNode.Children.Add(new TopicNode(Path.GetFileName(minorDir), minorDir, isMajorTopic: false));
             }

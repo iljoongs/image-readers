@@ -13,10 +13,10 @@ public class FileSystemImageStorageService : IImageStorageService
             return Array.Empty<ImageItem>();
         }
 
-        // 파일명 규칙(03-data-storage.md): {대주제}_{소주제}_{3자리 번호}.{확장자} → 번호가 앞에 오므로 문자열 정렬이 곧 번호 순서
-        // (확장자는 이미지마다 다를 수 있지만, 같은 번호를 가진 파일은 하나뿐이므로 정렬에 영향 없음).
+        // 읽기 순서는 파일명에 포함된 숫자를 실제 값으로 비교하는 자연 정렬을 따른다(03-data-storage.md).
+        // 예: "2.jpg"가 "10.jpg"보다 앞에 오도록 — 단순 문자열 정렬이면 반대로 정렬된다.
         return ImageFileExtensions.EnumerateImageFiles(minorTopic.FullPath)
-            .OrderBy(Path.GetFileName, StringComparer.Ordinal)
+            .OrderBy(Path.GetFileName, NaturalStringComparer.Instance)
             .Select(path => new ImageItem(path, Path.GetFileName(path)))
             .ToList();
     }
