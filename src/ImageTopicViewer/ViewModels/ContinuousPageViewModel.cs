@@ -187,9 +187,9 @@ public partial class ContinuousPageViewModel : ObservableObject
             {
                 return;
             }
-            catch (IOException)
+            catch (Exception ex) when (ex is IOException or NotSupportedException or FileFormatException or UnauthorizedAccessException)
             {
-                // 파일을 읽을 수 없으면 해당 이미지만 건너뛴다.
+                // 디코딩할 수 없는 파일(폴더에 수동으로 넣어진 미지원 형식 등)은 해당 이미지만 건너뛴다.
             }
         }
     }

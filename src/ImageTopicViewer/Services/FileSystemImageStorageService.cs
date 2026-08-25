@@ -26,7 +26,7 @@ public class FileSystemImageStorageService : IImageStorageService
         Directory.CreateDirectory(minorTopic.FullPath);
 
         var majorTopicName = Directory.GetParent(minorTopic.FullPath)!.Name;
-        var nextIndex = ImageFileExtensions.EnumerateImageFiles(minorTopic.FullPath).Count() + 1;
+        var nextIndex = GetNextIndex(minorTopic.FullPath);
 
         var succeeded = 0;
         var failed = 0;
@@ -66,6 +66,33 @@ public class FileSystemImageStorageService : IImageStorageService
         }
 
         return new ImageAddResult(succeeded, failed);
+    }
+
+    /// <summary>
+    /// 기존 파일명 끝의 "_번호"를 찾아 그중 최댓값+1을 다음 번호로 쓴다(파일 개수만으로 계산하면,
+    /// 이미 저장된 이름을 그대로 두는 정책상 번호가 비어있거나 관례를 따르지 않는 파일이 섞여 있을 때
+    /// 기존 파일과 같은 이름이 생성되어 덮어써버릴 수 있다).
+    /// </summary>
+    private static int GetNextIndex(string folderPath)
+    {
+        var maxExisting = ImageFileExtensions.EnumerateImageFiles(folderPath)
+            .Select(path => GetTrailingNumber(Path.GetFileNameWithoutExtension(path)))
+            .DefaultIfEmpty(0)
+            .Max();
+
+        return maxExisting + 1;
+    }
+
+    private static int GetTrailingNumber(string fileNameWithoutExtension)
+    {
+        var lastUnderscore = fileNameWithoutExtension.LastIndexOf('_');
+        if (lastUnderscore < 0)
+        {
+            return 0;
+        }
+
+        var numberPart = fileNameWithoutExtension[(lastUnderscore + 1)..];
+        return int.TryParse(numberPart, out var number) ? number : 0;
     }
 
     private static string GetOriginalExtension(ImageSourceInput input) => input switch
