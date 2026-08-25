@@ -29,8 +29,8 @@ internal static class ImageDropHelper
         else
         {
             // 웹 브라우저 등 실제 로컬 파일이 없는 "가상 파일" 드래그.
-            var streams = VirtualFileDropReader.ReadImageStreams(data);
-            inputs.AddRange(streams.Select(s => (ImageSourceInput)new ImageSourceInput.FromStream(s)));
+            var virtualFiles = VirtualFileDropReader.ReadImageStreams(data);
+            inputs.AddRange(virtualFiles.Select(f => (ImageSourceInput)new ImageSourceInput.FromStream(f.Content, f.FileName)));
         }
 
         return inputs;

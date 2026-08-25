@@ -10,5 +10,6 @@ public abstract record ImageSourceInput
 
     public sealed record FromBitmap(BitmapSource Bitmap) : ImageSourceInput;
 
-    public sealed record FromStream(Stream Content) : ImageSourceInput;
+    /// <summary>SuggestedFileName은 원본 확장자를 판단하는 데 쓰인다(예: 브라우저 가상 파일의 파일명 힌트). 없으면 PNG로 대체 저장된다.</summary>
+    public sealed record FromStream(Stream Content, string? SuggestedFileName) : ImageSourceInput;
 }

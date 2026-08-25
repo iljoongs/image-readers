@@ -147,7 +147,7 @@ public class FileSystemTopicRepository : ITopicRepository
             return;
         }
 
-        foreach (var filePath in Directory.GetFiles(folderPath, "*.png"))
+        foreach (var filePath in ImageFileExtensions.EnumerateImageFiles(folderPath))
         {
             var fileName = Path.GetFileName(filePath);
             if (!fileName.StartsWith(oldPrefix, StringComparison.Ordinal))

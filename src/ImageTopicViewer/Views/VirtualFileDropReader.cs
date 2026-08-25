@@ -11,6 +11,8 @@ namespace ImageTopicViewer.Views;
 /// Chrome/Edge 등에서 이미지를 드래그하면 실제 로컬 파일이 아니라 이 형식으로 제공되므로
 /// DataFormats.FileDrop/Bitmap만으로는 잡히지 않는다 (05-image-features.md의 "웹 브라우저 등에서 드롭한 경우").
 /// </summary>
+internal record VirtualFile(Stream Content, string? FileName);
+
 internal static class VirtualFileDropReader
 {
     private const string FileGroupDescriptorFormat = "FileGroupDescriptorW";
@@ -62,9 +64,9 @@ internal static class VirtualFileDropReader
         return comData.QueryGetData(ref formatEtc) == 0; // S_OK
     }
 
-    public static List<Stream> ReadImageStreams(WpfIDataObject data)
+    public static List<VirtualFile> ReadImageStreams(WpfIDataObject data)
     {
-        var result = new List<Stream>();
+        var result = new List<VirtualFile>();
 
         if (data is not ComIDataObject comData)
         {
@@ -86,22 +88,30 @@ internal static class VirtualFileDropReader
                 return result;
             }
 
-            int count;
+            var fileNames = new List<string?>();
             try
             {
-                count = Marshal.ReadInt32(ptr);
+                var count = Marshal.ReadInt32(ptr);
+                var descriptorSize = Marshal.SizeOf<FILEDESCRIPTOR>();
+
+                for (var i = 0; i < count; i++)
+                {
+                    var itemPtr = IntPtr.Add(ptr, sizeof(int) + i * descriptorSize);
+                    var descriptor = Marshal.PtrToStructure<FILEDESCRIPTOR>(itemPtr);
+                    fileNames.Add(descriptor.cFileName);
+                }
             }
             finally
             {
                 GlobalUnlock(descriptorMedium.unionmember);
             }
 
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < fileNames.Count; i++)
             {
                 var stream = ReadFileContents(comData, i);
                 if (stream is not null)
                 {
-                    result.Add(stream);
+                    result.Add(new VirtualFile(stream, fileNames[i]));
                 }
             }
         }
