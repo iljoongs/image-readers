@@ -91,22 +91,35 @@ public partial class ContinuousPageView : UserControl
 
     // ----- 확대/축소 (Ctrl+스크롤) -----
 
+    // WPF ScrollViewer 기본 휠 스크롤 한 칸(notch)당 이동량과 동일(3줄 x 16px). 배속(x1~x5)의 기준값으로 쓴다.
+    private const double BaseScrollAmountPerNotch = 48.0;
+
     private void Root_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
-        if (Keyboard.Modifiers != ModifierKeys.Control || DataContext is not ContinuousPageViewModel viewModel)
+        if (DataContext is not ContinuousPageViewModel viewModel)
         {
             return;
         }
 
-        if (e.Delta > 0)
+        if (Keyboard.Modifiers == ModifierKeys.Control)
         {
-            viewModel.ZoomInCommand.Execute(null);
-        }
-        else
-        {
-            viewModel.ZoomOutCommand.Execute(null);
+            if (e.Delta > 0)
+            {
+                viewModel.ZoomInCommand.Execute(null);
+            }
+            else
+            {
+                viewModel.ZoomOutCommand.Execute(null);
+            }
+
+            e.Handled = true;
+            return;
         }
 
+        // 일반 휠 스크롤: 배속(ScrollSpeedMultiplier)을 적용해 직접 스크롤한다.
+        var notches = e.Delta / 120.0;
+        var offsetDelta = -notches * BaseScrollAmountPerNotch * viewModel.ScrollSpeedMultiplier;
+        ImagesScrollViewer.ScrollToVerticalOffset(ImagesScrollViewer.VerticalOffset + offsetDelta);
         e.Handled = true;
     }
 

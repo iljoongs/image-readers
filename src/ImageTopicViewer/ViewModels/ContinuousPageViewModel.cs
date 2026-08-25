@@ -11,6 +11,9 @@ namespace ImageTopicViewer.ViewModels;
 /// <summary>이미지 표시 폭(px) 선택지. Width가 null이면 원본 크기(제약 없음)를 뜻한다.</summary>
 public sealed record ZoomOption(string Label, double? Width);
 
+/// <summary>연속보기 마우스 휠 스크롤 배속 선택지.</summary>
+public sealed record ScrollSpeedOption(string Label, int Multiplier);
+
 public partial class ContinuousPageViewModel : ObservableObject
 {
     /// <summary>확대/축소 콤보박스 항목이자 Ctrl+스크롤이 오르내리는 단계 목록 (연속보기/단일보기 공유).</summary>
@@ -28,6 +31,16 @@ public partial class ContinuousPageViewModel : ObservableObject
         new("1400px", 1400),
     };
 
+    /// <summary>연속보기 스크롤 배속 콤보박스 항목 (06-view-modes.md).</summary>
+    public static readonly IReadOnlyList<ScrollSpeedOption> ScrollSpeedOptions = new List<ScrollSpeedOption>
+    {
+        new("x1", 1),
+        new("x2", 2),
+        new("x3", 3),
+        new("x4", 4),
+        new("x5", 5),
+    };
+
     private readonly IImageStorageService _imageStorageService;
     private readonly IImageSourceProvider _imageSourceProvider;
     private CancellationTokenSource? _loadCts;
@@ -38,6 +51,10 @@ public partial class ContinuousPageViewModel : ObservableObject
     /// <summary>현재 표시 폭(px). null이면 원본 크기 (04-05번 요청: 확대/축소, 콤보박스와 Ctrl+스크롤이 값을 공유).</summary>
     [ObservableProperty]
     private double? _zoomWidth = 800;
+
+    /// <summary>연속보기 마우스 휠 스크롤 배속. 기본 x1.</summary>
+    [ObservableProperty]
+    private int _scrollSpeedMultiplier = 1;
 
     [ObservableProperty]
     private bool _showNoSelectionMessage = true;
