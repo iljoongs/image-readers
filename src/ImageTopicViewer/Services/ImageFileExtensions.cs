@@ -3,15 +3,15 @@ using System.IO;
 namespace ImageTopicViewer.Services;
 
 /// <summary>
-/// 소주제 폴더가 담을 수 있는 이미지 파일 확장자 목록. 이미지 저장은 원본 형식을 따라가므로
+/// 소주제 폴더(또는 압축 파일)가 담을 수 있는 이미지 파일 확장자 목록. 이미지 저장은 원본 형식을 따라가므로
 /// (03-data-storage.md), 같은 폴더 안에도 여러 확장자가 섞일 수 있다.
 /// </summary>
 internal static class ImageFileExtensions
 {
-    private static readonly string[] SearchPatterns =
+    private static readonly HashSet<string> Extensions = new(StringComparer.OrdinalIgnoreCase)
     {
-        "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.tiff", "*.tif",
-        "*.webp", "*.jfif", "*.ico", "*.heic", "*.heif", "*.avif",
+        ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tiff", ".tif",
+        ".webp", ".jfif", ".ico", ".heic", ".heif", ".avif",
     };
 
     /// <summary>
@@ -21,6 +21,9 @@ internal static class ImageFileExtensions
     /// </summary>
     public static IEnumerable<string> EnumerateImageFiles(string folderPath)
     {
-        return SearchPatterns.SelectMany(pattern => Directory.GetFiles(folderPath, pattern));
+        return Extensions.SelectMany(ext => Directory.GetFiles(folderPath, "*" + ext));
     }
+
+    /// <summary>주어진 파일명(압축 파일 내부 엔트리 이름 등)이 인식하는 이미지 확장자인지 판별한다.</summary>
+    public static bool IsImageFile(string fileName) => Extensions.Contains(Path.GetExtension(fileName));
 }

@@ -65,6 +65,10 @@ public partial class ContinuousPageViewModel : ObservableObject
     [ObservableProperty]
     private bool _showImages;
 
+    /// <summary>압축(zip) 소주제는 읽기 전용 — 추가/순서 변경/삭제가 비활성화된다 (03-data-storage.md).</summary>
+    [ObservableProperty]
+    private bool _isCurrentTopicReadOnly;
+
     /// <summary>연속보기/단일보기가 공유하는 "현재 이미지" 위치. 모드 전환 시 유지된다 (06-view-modes.md 공통 절).</summary>
     [ObservableProperty]
     private int _currentIndex;
@@ -154,6 +158,7 @@ public partial class ContinuousPageViewModel : ObservableObject
     public void LoadSubtopic(TopicNode? minorTopic)
     {
         _currentMinorTopic = minorTopic;
+        IsCurrentTopicReadOnly = minorTopic?.IsArchive ?? false;
         _loadCts?.Cancel();
         Images.Clear();
         CurrentIndex = 0;
@@ -194,7 +199,7 @@ public partial class ContinuousPageViewModel : ObservableObject
 
             try
             {
-                var image = await _imageSourceProvider.LoadAsync(item.FullPath, token);
+                var image = await _imageSourceProvider.LoadAsync(item, token);
                 if (!token.IsCancellationRequested)
                 {
                     item.Image = image;
@@ -204,7 +209,7 @@ public partial class ContinuousPageViewModel : ObservableObject
             {
                 return;
             }
-            catch (Exception ex) when (ex is IOException or NotSupportedException or FileFormatException or UnauthorizedAccessException)
+            catch (Exception ex) when (ex is IOException or NotSupportedException or FileFormatException or UnauthorizedAccessException or InvalidDataException)
             {
                 // 디코딩할 수 없는 파일(폴더에 수동으로 넣어진 미지원 형식 등)은 해당 이미지만 건너뛴다.
             }
@@ -214,7 +219,8 @@ public partial class ContinuousPageViewModel : ObservableObject
     /// <summary>드롭된 이미지 소스 목록을 추가한다 (로컬 파일/비트맵/가상 파일 스트림 등, 05-image-features.md 참조).</summary>
     public void AddDroppedImages(IReadOnlyList<ImageSourceInput> inputs)
     {
-        if (_currentMinorTopic is null || inputs.Count == 0)
+        // 1차 방어선은 View의 DragOver 차단(IsCurrentTopicReadOnly)이고, 여기는 안전망이다.
+        if (_currentMinorTopic is null || _currentMinorTopic.IsArchive || inputs.Count == 0)
         {
             return;
         }
@@ -224,7 +230,8 @@ public partial class ContinuousPageViewModel : ObservableObject
 
     public void MoveImage(ImageItem draggedItem, ImageItem targetItem)
     {
-        if (_currentMinorTopic is null)
+        // 압축(zip) 소주제는 읽기 전용이라 드래그 재정렬은 조용히 무시한다.
+        if (_currentMinorTopic is null || _currentMinorTopic.IsArchive)
         {
             return;
         }
@@ -245,6 +252,16 @@ public partial class ContinuousPageViewModel : ObservableObject
     {
         if (_currentMinorTopic is null)
         {
+            return;
+        }
+
+        if (_currentMinorTopic.IsArchive)
+        {
+            MessageBox.Show(
+                "압축 파일 안의 이미지는 삭제할 수 없습니다. 압축 파일은 읽기 전용으로 표시됩니다.",
+                "삭제 불가",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
             return;
         }
 

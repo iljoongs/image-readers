@@ -1,4 +1,5 @@
 using System.IO;
+using System.IO.Compression;
 using System.Windows.Media.Imaging;
 using ImageTopicViewer.Models;
 
@@ -8,6 +9,11 @@ public class FileSystemImageStorageService : IImageStorageService
 {
     public IReadOnlyList<ImageItem> GetImages(TopicNode minorTopic)
     {
+        if (minorTopic.IsArchive)
+        {
+            return GetImagesFromArchive(minorTopic.FullPath);
+        }
+
         if (!Directory.Exists(minorTopic.FullPath))
         {
             return Array.Empty<ImageItem>();
@@ -19,6 +25,32 @@ public class FileSystemImageStorageService : IImageStorageService
             .OrderBy(Path.GetFileName, NaturalStringComparer.Instance)
             .Select(path => new ImageItem(path, Path.GetFileName(path)))
             .ToList();
+    }
+
+    /// <summary>
+    /// 압축(zip) 소주제는 사용자가 직접 넣은 읽기 전용 파일이다 (03-data-storage.md "압축 파일 기반 소주제").
+    /// 손상되었거나 열 수 없으면 빈 소주제로 취급한다.
+    /// </summary>
+    private static IReadOnlyList<ImageItem> GetImagesFromArchive(string archiveFilePath)
+    {
+        if (!File.Exists(archiveFilePath))
+        {
+            return Array.Empty<ImageItem>();
+        }
+
+        try
+        {
+            using var archive = ZipFile.OpenRead(archiveFilePath);
+            return archive.Entries
+                .Where(e => !string.IsNullOrEmpty(e.Name) && ImageFileExtensions.IsImageFile(e.Name))
+                .OrderBy(e => e.FullName, NaturalStringComparer.Instance)
+                .Select(e => ImageItem.FromArchiveEntry(archiveFilePath, e.FullName))
+                .ToList();
+        }
+        catch (Exception ex) when (ex is InvalidDataException or IOException)
+        {
+            return Array.Empty<ImageItem>();
+        }
     }
 
     public ImageAddResult AddImages(TopicNode minorTopic, IReadOnlyList<ImageSourceInput> inputs)

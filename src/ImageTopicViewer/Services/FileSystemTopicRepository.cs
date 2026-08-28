@@ -6,6 +6,8 @@ namespace ImageTopicViewer.Services;
 
 public class FileSystemTopicRepository : ITopicRepository
 {
+    private const string ArchiveExtension = ".zip";
+
     private readonly string _dataFolderPath;
 
     public FileSystemTopicRepository(string dataFolderPath)
@@ -26,15 +28,30 @@ public class FileSystemTopicRepository : ITopicRepository
         {
             var majorNode = new TopicNode(Path.GetFileName(majorDir), majorDir, isMajorTopic: true);
 
-            foreach (var minorDir in Directory.GetDirectories(majorDir).OrderBy(Path.GetFileName, NaturalStringComparer.Instance))
+            foreach (var minorEntry in EnumerateMinorEntries(majorDir))
             {
-                majorNode.Children.Add(new TopicNode(Path.GetFileName(minorDir), minorDir, isMajorTopic: false));
+                majorNode.Children.Add(new TopicNode(minorEntry.Name, minorEntry.Path, isMajorTopic: false)
+                {
+                    IsArchive = minorEntry.IsArchive,
+                });
             }
 
             topics.Add(majorNode);
         }
 
         return topics;
+    }
+
+    /// <summary>대주제 폴더 바로 아래의 소주제 폴더와 .zip 파일을 함께 자연 정렬해서 열거한다.</summary>
+    private static IEnumerable<(string Name, string Path, bool IsArchive)> EnumerateMinorEntries(string majorDirPath)
+    {
+        var folders = Directory.GetDirectories(majorDirPath)
+            .Select(d => (Name: Path.GetFileName(d)!, Path: d, IsArchive: false));
+
+        var archives = Directory.GetFiles(majorDirPath, "*" + ArchiveExtension)
+            .Select(f => (Name: Path.GetFileNameWithoutExtension(f)!, Path: f, IsArchive: true));
+
+        return folders.Concat(archives).OrderBy(e => e.Name, NaturalStringComparer.Instance);
     }
 
     public TopicNode CreateMajorTopic(string name)
@@ -56,9 +73,9 @@ public class FileSystemTopicRepository : ITopicRepository
 
     public TopicNode CreateMinorTopic(TopicNode majorTopic, string name)
     {
-        var siblingNames = Directory.GetDirectories(majorTopic.FullPath).Select(Path.GetFileName);
+        var siblingNames = GetMinorSiblingNames(majorTopic.FullPath);
 
-        if (!TopicNameValidator.IsValid(name, siblingNames!, out var error))
+        if (!TopicNameValidator.IsValid(name, siblingNames, out var error))
         {
             throw new ArgumentException(error);
         }
@@ -71,6 +88,14 @@ public class FileSystemTopicRepository : ITopicRepository
         return node;
     }
 
+    /// <summary>대주제 폴더 바로 아래의 소주제 이름 목록(폴더명 + .zip 파일 베이스네임)을 반환한다 — 이름 중복 검증용.</summary>
+    private static IEnumerable<string> GetMinorSiblingNames(string majorDirPath)
+    {
+        var folderNames = Directory.GetDirectories(majorDirPath).Select(d => Path.GetFileName(d)!);
+        var archiveNames = Directory.GetFiles(majorDirPath, "*" + ArchiveExtension).Select(f => Path.GetFileNameWithoutExtension(f)!);
+        return folderNames.Concat(archiveNames);
+    }
+
     public void DeleteTopic(TopicNode node)
     {
         RecycleBin.Send(node.FullPath);
@@ -78,12 +103,22 @@ public class FileSystemTopicRepository : ITopicRepository
 
     public void RenameTopic(TopicNode node, string newName)
     {
-        var parentDirPath = Directory.GetParent(node.FullPath)!.FullName;
-        var siblingNames = Directory.GetDirectories(parentDirPath)
-            .Select(Path.GetFileName)
-            .Where(n => !string.Equals(n, node.Name, StringComparison.Ordinal));
+        IEnumerable<string> siblingNames;
+        if (node.IsMajorTopic)
+        {
+            var parentDirPath = Directory.GetParent(node.FullPath)!.FullName;
+            siblingNames = Directory.GetDirectories(parentDirPath)
+                .Select(d => Path.GetFileName(d)!)
+                .Where(n => !string.Equals(n, node.Name, StringComparison.Ordinal));
+        }
+        else
+        {
+            var majorDirPath = Directory.GetParent(node.FullPath)!.FullName;
+            siblingNames = GetMinorSiblingNames(majorDirPath)
+                .Where(n => !string.Equals(n, node.Name, StringComparison.Ordinal));
+        }
 
-        if (!TopicNameValidator.IsValid(newName, siblingNames!, out var error))
+        if (!TopicNameValidator.IsValid(newName, siblingNames, out var error))
         {
             throw new ArgumentException(error);
         }
@@ -111,13 +146,17 @@ public class FileSystemTopicRepository : ITopicRepository
 
         foreach (var minorNode in majorNode.Children)
         {
-            var newMinorPath = Path.Combine(newPath, minorNode.Name);
-            minorNode.FullPath = newMinorPath;
+            var minorFileName = minorNode.IsArchive ? minorNode.Name + ArchiveExtension : minorNode.Name;
+            minorNode.FullPath = Path.Combine(newPath, minorFileName);
 
-            RenameImageFilePrefix(
-                newMinorPath,
-                oldPrefix: $"{oldName}_{minorNode.Name}_",
-                newPrefix: $"{newName}_{minorNode.Name}_");
+            if (!minorNode.IsArchive)
+            {
+                RenameImageFilePrefix(
+                    minorNode.FullPath,
+                    oldPrefix: $"{oldName}_{minorNode.Name}_",
+                    newPrefix: $"{newName}_{minorNode.Name}_");
+            }
+            // 압축(zip) 소주제는 내부 파일명이 번호만이라(03-data-storage.md) 다시 쓸 이름이 없다.
         }
     }
 
@@ -126,17 +165,24 @@ public class FileSystemTopicRepository : ITopicRepository
         var oldName = minorNode.Name;
         var oldPath = minorNode.FullPath;
         var majorName = Directory.GetParent(oldPath)!.Name;
-        var newPath = Path.Combine(Path.GetDirectoryName(oldPath)!, newName);
+        var newFileName = minorNode.IsArchive ? newName + ArchiveExtension : newName;
+        var newPath = Path.Combine(Path.GetDirectoryName(oldPath)!, newFileName);
 
-        Directory.Move(oldPath, newPath);
+        if (minorNode.IsArchive)
+        {
+            File.Move(oldPath, newPath);
+        }
+        else
+        {
+            Directory.Move(oldPath, newPath);
+            RenameImageFilePrefix(
+                newPath,
+                oldPrefix: $"{majorName}_{oldName}_",
+                newPrefix: $"{majorName}_{newName}_");
+        }
 
         minorNode.Name = newName;
         minorNode.FullPath = newPath;
-
-        RenameImageFilePrefix(
-            newPath,
-            oldPrefix: $"{majorName}_{oldName}_",
-            newPrefix: $"{majorName}_{newName}_");
     }
 
     /// <summary>폴더 내 이미지 파일명의 {대주제}_{소주제}_ 접두사를 새 이름으로 일괄 재작성한다. 번호 부분은 그대로 유지된다.</summary>

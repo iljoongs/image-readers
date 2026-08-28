@@ -71,7 +71,9 @@ public partial class ContinuousPageView : UserControl
 
     private void Grid_DragOver(object sender, DragEventArgs e)
     {
-        e.Effects = ImageDropHelper.CanAccept(e.Data) ? DragDropEffects.Copy : DragDropEffects.None;
+        // 압축(zip) 소주제는 읽기 전용이라 드롭 자체를 거부한다 (커서에 "불가" 표시).
+        var isReadOnly = DataContext is ContinuousPageViewModel { IsCurrentTopicReadOnly: true };
+        e.Effects = !isReadOnly && ImageDropHelper.CanAccept(e.Data) ? DragDropEffects.Copy : DragDropEffects.None;
         e.Handled = true;
     }
 

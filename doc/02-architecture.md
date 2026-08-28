@@ -21,8 +21,8 @@ ImageTopicViewer/
 │       │   ├── TopicTreeViewModel.cs
 │       │   └── ImagePageViewModel.cs
 │       ├── Models/
-│       │   ├── TopicNode.cs        // 대주제/소주제 노드
-│       │   ├── ImageItem.cs        // 개별 이미지 항목
+│       │   ├── TopicNode.cs        // 대주제/소주제 노드 (IsArchive: 압축 파일 기반 소주제 여부)
+│       │   ├── ImageItem.cs        // 개별 이미지 항목 (폴더 파일 또는 압축 파일 내부 항목)
 │       │   └── AppSettings.cs      // 데이터 폴더 경로, 창 상태, 마지막 세션 상태
 │       ├── Services/
 │       │   ├── ITopicRepository.cs      // 대주제/소주제 CRUD (폴더 스캔 기반)
@@ -59,7 +59,7 @@ ImageTopicViewer/
 - **ITopicRepository**: 설정에 저장된 데이터 폴더를 스캔하여 대주제/소주제 트리를 구성. 주제 추가/삭제(휴지통 이동)/이름변경(폴더 rename + 내부 파일 재넘버링 트리거) 담당.
 - **IImageStorageService**: 이미지 파일 이동, PNG 포맷 통일 변환, 파일명 규칙 적용, 순서 변경/삭제(휴지통 이동) 시 재넘버링 로직 담당. (상세는 `03-data-storage.md` 참조)
   - 삭제는 영구 삭제가 아니라 **Windows 휴지통으로 이동**한다 (`Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile`/`DeleteDirectory`의 `RecycleOption.SendToRecycleBin` 사용 검토).
-- **IImageSourceProvider**: 연속보기/단일보기가 화면에 그릴 이미지 소스를 비동기로 제공. v1은 원본 PNG 파일을 그대로 비동기 로드하는 단순 구현이지만, 이 인터페이스 뒤에서 동작하므로 나중에 성능 이슈가 생기면 뷰 코드 변경 없이 썸네일 캐싱 구현으로 교체할 수 있다. (`06-view-modes.md`, `08-open-decisions.md` 참조)
+- **IImageSourceProvider**: 연속보기/단일보기가 화면에 그릴 이미지 소스를 비동기로 제공. v1은 원본 파일(또는 압축 파일 내부 항목)을 그대로 비동기 로드하는 단순 구현이지만, 이 인터페이스 뒤에서 동작하므로 나중에 성능 이슈가 생기면 뷰 코드 변경 없이 썸네일 캐싱 구현으로 교체할 수 있다. `LoadAsync(ImageItem item, ...)`는 `item.IsFromArchive` 여부로 폴더 파일 로드와 zip 엔트리 로드를 분기한다. (`03-data-storage.md`의 "압축 파일 기반 소주제", `06-view-modes.md`, `08-open-decisions.md` 참조)
 
 ## 데이터 소스에 대한 설계 결정
 별도 DB/JSON 메타데이터 파일 없이, **폴더 구조 + 파일명 자체를 데이터 소스로 사용**한다.

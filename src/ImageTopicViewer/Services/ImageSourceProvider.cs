@@ -1,11 +1,21 @@
+using System.IO;
+using System.IO.Compression;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using ImageTopicViewer.Models;
 
 namespace ImageTopicViewer.Services;
 
 public class ImageSourceProvider : IImageSourceProvider
 {
-    public Task<ImageSource> LoadAsync(string filePath, CancellationToken cancellationToken = default)
+    public Task<ImageSource> LoadAsync(ImageItem item, CancellationToken cancellationToken = default)
+    {
+        return item.IsFromArchive
+            ? LoadFromArchiveAsync(item.ArchiveFilePath!, item.ArchiveEntryName!, cancellationToken)
+            : LoadFromFileAsync(item.FullPath, cancellationToken);
+    }
+
+    private static Task<ImageSource> LoadFromFileAsync(string filePath, CancellationToken cancellationToken)
     {
         return Task.Run(() =>
         {
@@ -23,6 +33,30 @@ public class ImageSourceProvider : IImageSourceProvider
             bitmap.Freeze();
 
             return (ImageSource)bitmap;
+        }, cancellationToken);
+    }
+
+    private static Task<ImageSource> LoadFromArchiveAsync(string archiveFilePath, string entryName, CancellationToken cancellationToken)
+    {
+        return Task.Run(() =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            using var archive = ZipFile.OpenRead(archiveFilePath);
+            var entry = archive.GetEntry(entryName)
+                ?? throw new FileNotFoundException($"압축 파일 안에서 항목을 찾을 수 없습니다: {entryName}", entryName);
+
+            // 엔트리 스트림은 seek을 지원하지 않을 수 있어, 메모리로 복사한 뒤 디코딩한다.
+            using var entryStream = entry.Open();
+            using var memoryStream = new MemoryStream();
+            entryStream.CopyTo(memoryStream);
+            memoryStream.Position = 0;
+
+            var decoder = BitmapDecoder.Create(memoryStream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+            var frame = decoder.Frames[0];
+            frame.Freeze();
+
+            return (ImageSource)frame;
         }, cancellationToken);
     }
 }
