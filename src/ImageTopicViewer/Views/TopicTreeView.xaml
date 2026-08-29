@@ -19,7 +19,9 @@
             </TreeView.ItemContainerStyle>
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                    <TextBlock Text="{Binding Name}" Padding="2">
+                    <TextBlock Padding="2">
+                        <Run Text="{Binding Name, Mode=OneWay}"/>
+                        <Run Text="{Binding ProgressLabel, Mode=OneWay}" Foreground="Gray"/>
                         <TextBlock.ContextMenu>
                             <ContextMenu>
                                 <MenuItem Header="소주제 추가"

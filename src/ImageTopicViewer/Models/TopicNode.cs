@@ -14,6 +14,19 @@ public partial class TopicNode : ObservableObject
     [ObservableProperty]
     private bool _isSelected;
 
+    /// <summary>이 소주제에서 마지막으로 보던 이미지의 0부터 시작하는 인덱스. null이면 아직 본 적 없음 (07-ui-layout.md "주제 트리").</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ProgressLabel))]
+    private int? _viewedIndex;
+
+    /// <summary>ViewedIndex 기록 당시 이 소주제의 전체 이미지 수.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ProgressLabel))]
+    private int _viewedTotalCount;
+
+    /// <summary>트리에 이름 옆에 붙는 "(N/전체)" 표시. 본 적 없으면 빈 문자열.</summary>
+    public string ProgressLabel => ViewedIndex.HasValue ? $" ({ViewedIndex.Value + 1}/{ViewedTotalCount})" : string.Empty;
+
     public string FullPath { get; set; }
     public bool IsMajorTopic { get; init; }
 

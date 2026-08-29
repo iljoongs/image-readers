@@ -28,6 +28,7 @@ public partial class MainViewModel : ObservableObject
         ContinuousPage = new ContinuousPageViewModel(imageStorageService, imageSourceProvider);
 
         TopicTree.PropertyChanged += OnTopicTreePropertyChanged;
+        ContinuousPage.PropertyChanged += OnContinuousPagePropertyChanged;
     }
 
     partial void OnIsSingleViewChanged(bool value)
@@ -39,8 +40,11 @@ public partial class MainViewModel : ObservableObject
     /// <summary>앱 시작 시 마지막 세션 상태를 복원한다 (02-architecture.md "세션 상태 저장/복원").</summary>
     public void RestoreSession(AppSettings settings)
     {
+        ApplyTopicProgress(settings.TopicProgress);
+
         TopicTree.SelectByName(settings.LastMajorTopicName, settings.LastMinorTopicName);
         IsSingleView = settings.LastIsSingleView;
+        ContinuousPage.ZoomPercent = settings.LastZoomPercent;
 
         if (ContinuousPage.Images.Count > 0)
         {
@@ -66,6 +70,8 @@ public partial class MainViewModel : ObservableObject
 
         settings.LastIsSingleView = IsSingleView;
         settings.LastImageIndex = ContinuousPage.CurrentIndex;
+        settings.LastZoomPercent = ContinuousPage.ZoomPercent;
+        settings.TopicProgress = CollectTopicProgress();
     }
 
     [RelayCommand]
@@ -81,5 +87,67 @@ public partial class MainViewModel : ObservableObject
         var node = TopicTree.SelectedNode;
         var minorTopic = node is { IsMajorTopic: false } ? node : null;
         ContinuousPage.LoadSubtopic(minorTopic);
+        UpdateCurrentTopicProgress();
+    }
+
+    private void OnContinuousPagePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ContinuousPageViewModel.CurrentIndex))
+        {
+            UpdateCurrentTopicProgress();
+        }
+    }
+
+    /// <summary>현재 선택된 소주제 노드에 "본 위치"를 기록해 트리 라벨에 즉시 반영한다 (07-ui-layout.md).</summary>
+    private void UpdateCurrentTopicProgress()
+    {
+        var node = TopicTree.SelectedNode;
+        if (node is not { IsMajorTopic: false } || ContinuousPage.Images.Count == 0)
+        {
+            return;
+        }
+
+        node.ViewedIndex = ContinuousPage.CurrentIndex;
+        node.ViewedTotalCount = ContinuousPage.Images.Count;
+    }
+
+    private static string GetProgressKey(TopicNode major, TopicNode minor) => $"{major.Name}/{minor.Name}";
+
+    private void ApplyTopicProgress(Dictionary<string, TopicProgressEntry>? progress)
+    {
+        if (progress is null || progress.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var major in TopicTree.Topics)
+        {
+            foreach (var minor in major.Children)
+            {
+                if (progress.TryGetValue(GetProgressKey(major, minor), out var entry))
+                {
+                    minor.ViewedIndex = entry.Index;
+                    minor.ViewedTotalCount = entry.Count;
+                }
+            }
+        }
+    }
+
+    private Dictionary<string, TopicProgressEntry> CollectTopicProgress()
+    {
+        var result = new Dictionary<string, TopicProgressEntry>();
+
+        foreach (var major in TopicTree.Topics)
+        {
+            foreach (var minor in major.Children)
+            {
+                if (minor.ViewedIndex is { } index)
+                {
+                    result[GetProgressKey(major, minor)] = new TopicProgressEntry { Index = index, Count = minor.ViewedTotalCount };
+                }
+            }
+        }
+
+        return result;
     }
 }

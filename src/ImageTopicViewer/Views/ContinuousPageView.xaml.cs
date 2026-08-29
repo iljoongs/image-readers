@@ -25,12 +25,14 @@ public partial class ContinuousPageView : UserControl
         {
             oldViewModel.ScrollToTopRequested -= OnScrollToTopRequested;
             oldViewModel.ScrollToBottomRequested -= OnScrollToBottomRequested;
+            oldViewModel.ScrollToIndexRequested -= OnScrollToIndexRequested;
         }
 
         if (e.NewValue is ContinuousPageViewModel newViewModel)
         {
             newViewModel.ScrollToTopRequested += OnScrollToTopRequested;
             newViewModel.ScrollToBottomRequested += OnScrollToBottomRequested;
+            newViewModel.ScrollToIndexRequested += OnScrollToIndexRequested;
         }
     }
 
@@ -44,6 +46,13 @@ public partial class ContinuousPageView : UserControl
     private void OnScrollToBottomRequested(object? sender, EventArgs e)
     {
         ImagesScrollViewer.ScrollToBottom();
+    }
+
+    // ----- 툴바에서 페이지 번호를 입력해 이동했을 때 (07-ui-layout.md) -----
+
+    private void OnScrollToIndexRequested(object? sender, int index)
+    {
+        ScrollToIndex(index);
     }
 
     // ----- 모드 전환/시작 시 공유 위치(CurrentIndex)로 스크롤 (06-view-modes.md 공통 절, 02-architecture.md 세션 복원) -----

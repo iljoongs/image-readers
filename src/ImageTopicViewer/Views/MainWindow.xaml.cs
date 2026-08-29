@@ -1,5 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using ImageTopicViewer.Services;
 using ImageTopicViewer.ViewModels;
 
@@ -80,5 +82,26 @@ public partial class MainWindow : Window
         _viewModel.CaptureSession(s);
 
         _settingsService.Save();
+    }
+
+    // ----- 툴바의 현재 페이지 번호 입력란 (07-ui-layout.md) -----
+
+    private void PageNumberTextBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || sender is not TextBox textBox)
+        {
+            return;
+        }
+
+        textBox.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
+        Keyboard.ClearFocus();
+    }
+
+    private void PageNumberTextBox_GotFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox textBox)
+        {
+            textBox.SelectAll();
+        }
     }
 }

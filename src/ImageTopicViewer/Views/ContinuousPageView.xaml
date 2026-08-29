@@ -39,8 +39,12 @@
                                     <MenuItem Header="삭제" Click="DeleteImageMenuItem_Click"/>
                                 </ContextMenu>
                             </Border.ContextMenu>
-                            <Image Source="{Binding Image}" Stretch="Uniform"
-                                   Width="{Binding DataContext.ZoomWidth, RelativeSource={RelativeSource AncestorType=UserControl}, TargetNullValue=NaN}"/>
+                            <Image Source="{Binding Image}" Stretch="Uniform">
+                                <Image.LayoutTransform>
+                                    <ScaleTransform ScaleX="{Binding DataContext.ZoomScale, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    ScaleY="{Binding DataContext.ZoomScale, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                </Image.LayoutTransform>
+                            </Image>
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

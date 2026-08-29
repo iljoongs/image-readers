@@ -8,28 +8,22 @@ using ImageTopicViewer.Services;
 
 namespace ImageTopicViewer.ViewModels;
 
-/// <summary>이미지 표시 폭(px) 선택지. Width가 null이면 원본 크기(제약 없음)를 뜻한다.</summary>
-public sealed record ZoomOption(string Label, double? Width);
+/// <summary>확대/축소 배율(%) 선택지. 100%가 원본 크기다.</summary>
+public sealed record ZoomOption(string Label, double Percent);
 
 /// <summary>연속보기 마우스 휠 스크롤 배속 선택지.</summary>
 public sealed record ScrollSpeedOption(string Label, int Multiplier);
 
 public partial class ContinuousPageViewModel : ObservableObject
 {
-    /// <summary>확대/축소 콤보박스 항목이자 Ctrl+스크롤이 오르내리는 단계 목록 (연속보기/단일보기 공유).</summary>
-    public static readonly IReadOnlyList<ZoomOption> ZoomOptions = new List<ZoomOption>
-    {
-        new("원본", null),
-        new("50px", 50),
-        new("100px", 100),
-        new("200px", 200),
-        new("400px", 400),
-        new("600px", 600),
-        new("800px", 800),
-        new("1000px", 1000),
-        new("1200px", 1200),
-        new("1400px", 1400),
-    };
+    private const double MinZoomPercent = 10;
+    private const double MaxZoomPercent = 250;
+    private const double ZoomStepPercent = 10;
+
+    /// <summary>확대/축소 콤보박스 항목이자 Ctrl+스크롤이 오르내리는 단계 목록 (연속보기/단일보기 공유). 10%~250%, 10% 단위.</summary>
+    public static readonly IReadOnlyList<ZoomOption> ZoomOptions = Enumerable.Range(1, 25)
+        .Select(i => new ZoomOption($"{i * 10}%", i * 10))
+        .ToList();
 
     /// <summary>연속보기 스크롤 배속 콤보박스 항목 (06-view-modes.md).</summary>
     public static readonly IReadOnlyList<ScrollSpeedOption> ScrollSpeedOptions = new List<ScrollSpeedOption>
@@ -48,9 +42,13 @@ public partial class ContinuousPageViewModel : ObservableObject
 
     public ObservableCollection<ImageItem> Images { get; } = new();
 
-    /// <summary>현재 표시 폭(px). null이면 원본 크기 (04-05번 요청: 확대/축소, 콤보박스와 Ctrl+스크롤이 값을 공유).</summary>
+    /// <summary>현재 확대/축소 배율(%). 100 = 원본 크기. 콤보박스와 Ctrl+스크롤이 값을 공유한다.</summary>
     [ObservableProperty]
-    private double? _zoomWidth = 800;
+    [NotifyPropertyChangedFor(nameof(ZoomScale))]
+    private double _zoomPercent = 100;
+
+    /// <summary>ZoomPercent를 LayoutTransform에 바로 쓸 수 있는 배율(1.0 = 100%)로 환산한 값.</summary>
+    public double ZoomScale => ZoomPercent / 100.0;
 
     /// <summary>연속보기 마우스 휠 스크롤 배속. 기본 x1.</summary>
     [ObservableProperty]
@@ -77,10 +75,35 @@ public partial class ContinuousPageViewModel : ObservableObject
     public ImageItem? CurrentItem =>
         CurrentIndex >= 0 && CurrentIndex < Images.Count ? Images[CurrentIndex] : null;
 
+    /// <summary>
+    /// 툴바에 표시/편집하는 1부터 시작하는 페이지 번호. 값을 입력하면 그 페이지로 이동한다 (07-ui-layout.md).
+    /// </summary>
+    public int CurrentPageNumber
+    {
+        get => Images.Count == 0 ? 0 : CurrentIndex + 1;
+        set
+        {
+            if (Images.Count == 0)
+            {
+                return;
+            }
+
+            var clamped = Math.Clamp(value, 1, Images.Count);
+            CurrentIndex = clamped - 1;
+            // CurrentIndex가 실제로 안 바뀌었어도(예: 범위를 벗어난 값을 입력) 텍스트박스가
+            // 유효한 값으로 되돌아오도록 항상 알린다.
+            OnPropertyChanged(nameof(CurrentPageNumber));
+            ScrollToIndexRequested?.Invoke(this, CurrentIndex);
+        }
+    }
+
     /// <summary>연속보기 화면(View)이 스크롤 위치를 맞추기 위해 구독하는 이벤트.</summary>
     public event EventHandler? ScrollToTopRequested;
 
     public event EventHandler? ScrollToBottomRequested;
+
+    /// <summary>페이지 번호를 직접 입력해 이동했을 때, 연속보기가 그 위치로 스크롤하도록 알린다.</summary>
+    public event EventHandler<int>? ScrollToIndexRequested;
 
     public ContinuousPageViewModel(IImageStorageService imageStorageService, IImageSourceProvider imageSourceProvider)
     {
@@ -94,7 +117,11 @@ public partial class ContinuousPageViewModel : ObservableObject
     [RelayCommand]
     private void ScrollToBottom() => ScrollToBottomRequested?.Invoke(this, EventArgs.Empty);
 
-    partial void OnCurrentIndexChanged(int value) => OnPropertyChanged(nameof(CurrentItem));
+    partial void OnCurrentIndexChanged(int value)
+    {
+        OnPropertyChanged(nameof(CurrentItem));
+        OnPropertyChanged(nameof(CurrentPageNumber));
+    }
 
     /// <summary>연속보기에서 특정 이미지를 클릭했을 때 "현재 이미지"로 지정한다.</summary>
     public void SetCurrentIndex(ImageItem item)
@@ -106,36 +133,13 @@ public partial class ContinuousPageViewModel : ObservableObject
         }
     }
 
-    /// <summary>목록의 다음 단계로 확대한다. 목록 맨 위(1400px)에서 한 번 더 하면 원본으로 넘어간다.</summary>
+    /// <summary>10%p 확대한다. 최대 250%.</summary>
     [RelayCommand]
-    private void ZoomIn()
-    {
-        var presets = ZoomOptions.Where(o => o.Width.HasValue).Select(o => o.Width!.Value).ToList();
+    private void ZoomIn() => ZoomPercent = Math.Min(MaxZoomPercent, ZoomPercent + ZoomStepPercent);
 
-        if (ZoomWidth is null)
-        {
-            return; // 이미 원본(목록의 맨 위) 상태
-        }
-
-        var index = presets.IndexOf(ZoomWidth.Value);
-        ZoomWidth = index < 0 || index == presets.Count - 1 ? null : presets[index + 1];
-    }
-
-    /// <summary>목록의 이전 단계로 축소한다. 원본 상태에서 하면 가장 큰 프리셋(1400px)으로 넘어간다.</summary>
+    /// <summary>10%p 축소한다. 최소 10%.</summary>
     [RelayCommand]
-    private void ZoomOut()
-    {
-        var presets = ZoomOptions.Where(o => o.Width.HasValue).Select(o => o.Width!.Value).ToList();
-
-        if (ZoomWidth is null)
-        {
-            ZoomWidth = presets[^1];
-            return;
-        }
-
-        var index = presets.IndexOf(ZoomWidth.Value);
-        ZoomWidth = index <= 0 ? presets[0] : presets[index - 1];
-    }
+    private void ZoomOut() => ZoomPercent = Math.Max(MinZoomPercent, ZoomPercent - ZoomStepPercent);
 
     [RelayCommand]
     private void GoToPreviousImage()
@@ -170,6 +174,7 @@ public partial class ContinuousPageViewModel : ObservableObject
             ShowEmptyMessage = false;
             ShowImages = false;
             OnPropertyChanged(nameof(CurrentItem));
+            OnPropertyChanged(nameof(CurrentPageNumber));
             return;
         }
 
@@ -183,6 +188,7 @@ public partial class ContinuousPageViewModel : ObservableObject
         ShowEmptyMessage = items.Count == 0;
         ShowImages = items.Count > 0;
         OnPropertyChanged(nameof(CurrentItem));
+        OnPropertyChanged(nameof(CurrentPageNumber));
 
         _loadCts = new CancellationTokenSource();
         _ = LoadImagesAsync(items, _loadCts.Token);
@@ -303,6 +309,7 @@ public partial class ContinuousPageViewModel : ObservableObject
         else
         {
             OnPropertyChanged(nameof(CurrentItem));
+            OnPropertyChanged(nameof(CurrentPageNumber));
         }
     }
 
@@ -325,6 +332,7 @@ public partial class ContinuousPageViewModel : ObservableObject
         ShowNoSelectionMessage = false;
         ShowEmptyMessage = Images.Count == 0;
         ShowImages = Images.Count > 0;
+        OnPropertyChanged(nameof(CurrentPageNumber));
 
         if (newItems.Count > 0)
         {

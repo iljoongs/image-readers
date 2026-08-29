@@ -15,7 +15,20 @@
         <!-- 상단 툴바: 연속보기/단일보기 토글 (06-view-modes.md) -->
         <Border Grid.Row="0" Padding="8" BorderBrush="#CCCCCC" BorderThickness="0,0,0,1">
             <DockPanel LastChildFill="False">
-                <TextBlock Text="ImageTopicViewer" FontWeight="Bold" VerticalAlignment="Center"/>
+                <!-- 맨 앞: 현재 페이지 번호(1부터) / 전체. 입력해서 이동 가능 (07-ui-layout.md). -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                            Visibility="{Binding ContinuousPage.ShowImages, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <TextBox x:Name="PageNumberTextBox" Width="45" TextAlignment="Center"
+                             VerticalContentAlignment="Center"
+                             Text="{Binding ContinuousPage.CurrentPageNumber, Mode=TwoWay}"
+                             KeyDown="PageNumberTextBox_KeyDown"
+                             GotFocus="PageNumberTextBox_GotFocus"/>
+                    <TextBlock VerticalAlignment="Center" Margin="4,0,0,0">
+                        <Run Text="/"/>
+                        <Run Text="{Binding ContinuousPage.Images.Count, Mode=OneWay}"/>
+                    </TextBlock>
+                </StackPanel>
+
                 <Button DockPanel.Dock="Right" HorizontalAlignment="Right"
                         Content="{Binding ViewModeToggleLabel}"
                         Command="{Binding ToggleViewModeCommand}"
@@ -24,8 +37,8 @@
                             VerticalAlignment="Center">
                     <TextBlock Text="크기:" VerticalAlignment="Center" Margin="0,0,4,0"/>
                     <ComboBox ItemsSource="{x:Static vm:ContinuousPageViewModel.ZoomOptions}"
-                              DisplayMemberPath="Label" SelectedValuePath="Width"
-                              SelectedValue="{Binding ContinuousPage.ZoomWidth, Mode=TwoWay}"
+                              DisplayMemberPath="Label" SelectedValuePath="Percent"
+                              SelectedValue="{Binding ContinuousPage.ZoomPercent, Mode=TwoWay}"
                               Width="90"/>
                 </StackPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="0,0,12,0"
