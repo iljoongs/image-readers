@@ -42,13 +42,17 @@ public partial class ContinuousPageViewModel : ObservableObject
 
     public ObservableCollection<ImageItem> Images { get; } = new();
 
-    /// <summary>현재 확대/축소 배율(%). 100 = 원본 크기. 콤보박스와 Ctrl+스크롤이 값을 공유한다.</summary>
+    /// <summary>100%일 때의 표시 폭(px). 이미지의 실제 픽셀 해상도와 무관하게, 창에 보기 좋았던 기존 기본값을 기준으로 삼는다.
+    /// (실제 해상도를 기준으로 하면 스캔본마다 해상도가 달라 100%가 창보다 훨씬 크거나 작게 나올 수 있다.)</summary>
+    private const double ReferenceWidthAt100Percent = 800;
+
+    /// <summary>현재 확대/축소 배율(%). 100 = 기준 폭(800px) 그대로. 콤보박스와 Ctrl+스크롤이 값을 공유한다.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ZoomScale))]
+    [NotifyPropertyChangedFor(nameof(ZoomWidth))]
     private double _zoomPercent = 100;
 
-    /// <summary>ZoomPercent를 LayoutTransform에 바로 쓸 수 있는 배율(1.0 = 100%)로 환산한 값.</summary>
-    public double ZoomScale => ZoomPercent / 100.0;
+    /// <summary>ZoomPercent를 실제 표시 폭(px)으로 환산한 값. Image.Width에 바로 바인딩한다.</summary>
+    public double ZoomWidth => ReferenceWidthAt100Percent * ZoomPercent / 100.0;
 
     /// <summary>연속보기 마우스 휠 스크롤 배속. 기본 x1.</summary>
     [ObservableProperty]

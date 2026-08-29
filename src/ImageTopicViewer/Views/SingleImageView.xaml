@@ -19,11 +19,7 @@
 
         <Grid Visibility="{Binding ShowImages, Converter={StaticResource BoolToVisibilityConverter}}">
             <Image Source="{Binding CurrentItem.Image}" Stretch="Uniform" Margin="60,16"
-                   HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Image.LayoutTransform>
-                    <ScaleTransform ScaleX="{Binding ZoomScale}" ScaleY="{Binding ZoomScale}"/>
-                </Image.LayoutTransform>
-            </Image>
+                   Width="{Binding ZoomWidth}"/>
 
             <Grid>
                 <Grid.ColumnDefinitions>
