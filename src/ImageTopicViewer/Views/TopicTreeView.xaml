@@ -20,6 +20,23 @@
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                     <TextBlock Padding="2">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="TextWrapping" Value="NoWrap"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsMajorTopic}" Value="True">
+                                        <Setter Property="TextWrapping" Value="Wrap"/>
+                                        <Setter Property="MaxWidth">
+                                            <Setter.Value>
+                                                <Binding ElementName="Tree" Path="ActualWidth"
+                                                         Converter="{StaticResource WidthMinusMarginConverter}"
+                                                         ConverterParameter="40"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
                         <Run Text="{Binding Name, Mode=OneWay}"/>
                         <Run Text="{Binding ProgressLabel, Mode=OneWay}" Foreground="Gray"/>
                         <TextBlock.ContextMenu>

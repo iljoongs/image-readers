@@ -5,5 +5,6 @@
     <Application.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+        <conv:WidthMinusMarginConverter x:Key="WidthMinusMarginConverter"/>
     </Application.Resources>
 </Application>
