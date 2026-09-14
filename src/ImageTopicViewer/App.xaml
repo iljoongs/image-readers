@@ -6,5 +6,7 @@
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
         <conv:WidthMinusMarginConverter x:Key="WidthMinusMarginConverter"/>
+        <conv:MajorTopicProgressColorConverter x:Key="MajorTopicProgressColorConverter"/>
+        <conv:ProgressStarWidthConverter x:Key="ProgressStarWidthConverter"/>
     </Application.Resources>
 </Application>

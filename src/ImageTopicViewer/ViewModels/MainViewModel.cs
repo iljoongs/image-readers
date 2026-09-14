@@ -41,6 +41,7 @@ public partial class MainViewModel : ObservableObject
     public void RestoreSession(AppSettings settings)
     {
         ApplyTopicProgress(settings.TopicProgress);
+        ApplyMajorTopicProgress(settings.MajorTopicProgress);
 
         TopicTree.SelectByName(settings.LastMajorTopicName, settings.LastMinorTopicName);
         IsSingleView = settings.LastIsSingleView;
@@ -72,6 +73,7 @@ public partial class MainViewModel : ObservableObject
         settings.LastImageIndex = ContinuousPage.CurrentIndex;
         settings.LastZoomPercent = ContinuousPage.ZoomPercent;
         settings.TopicProgress = CollectTopicProgress();
+        settings.MajorTopicProgress = CollectMajorTopicProgress();
     }
 
     [RelayCommand]
@@ -150,4 +152,23 @@ public partial class MainViewModel : ObservableObject
 
         return result;
     }
+
+    private void ApplyMajorTopicProgress(Dictionary<string, int>? progress)
+    {
+        if (progress is null || progress.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var major in TopicTree.Topics)
+        {
+            if (progress.TryGetValue(major.Name, out var value))
+            {
+                major.Progress = Math.Clamp(value, 1, 10);
+            }
+        }
+    }
+
+    private Dictionary<string, int> CollectMajorTopicProgress() =>
+        TopicTree.Topics.ToDictionary(major => major.Name, major => major.Progress);
 }

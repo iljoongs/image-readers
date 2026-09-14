@@ -131,6 +131,26 @@ public partial class TopicTreeViewModel : ObservableObject
         }
     }
 
+    /// <summary>팝업 메뉴 "진행도 설정" → 대화상자에서 1~10 값을 골라 대주제의 progress bar에 반영한다 (04-topic-management.md).</summary>
+    [RelayCommand]
+    private void SetMajorTopicProgress(TopicNode? node)
+    {
+        if (node is not { IsMajorTopic: true })
+        {
+            return;
+        }
+
+        var dialog = new TopicProgressDialog(node.Name, node.Progress)
+        {
+            Owner = Application.Current.MainWindow,
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            node.Progress = dialog.SelectedValue;
+        }
+    }
+
     [RelayCommand]
     private void RenameTopic(TopicNode? node)
     {

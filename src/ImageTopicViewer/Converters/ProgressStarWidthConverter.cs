@@ -1,0 +1,26 @@
+using System.Globalization;
+using System.Windows;
+using System.Windows.Data;
+
+namespace ImageTopicViewer.Converters;
+
+/// <summary>대주제 진행도(1~10)를 progress bar 모양의 채움/빈 칸 폭 비율(GridLength, Star)로 바꾼다.
+/// ConverterParameter "Fill"이면 채워진 칸 비율(진행도), "Empty"면 남은 칸 비율(10-진행도)을 반환한다
+/// (07-ui-layout.md "좌측 패널").</summary>
+public class ProgressStarWidthConverter : IValueConverter
+{
+    private const int Max = 10;
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var progress = Math.Clamp(value is int i ? i : 1, 1, Max);
+        var weight = string.Equals(parameter as string, "Fill", StringComparison.OrdinalIgnoreCase)
+            ? progress
+            : Max - progress;
+
+        return new GridLength(weight, GridUnitType.Star);
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}

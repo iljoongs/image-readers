@@ -29,6 +29,15 @@ public partial class TopicTreeView : UserControl
         }
     }
 
+    private void SetProgressMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is TopicTreeViewModel viewModel
+            && sender is MenuItem { DataContext: TopicNode node })
+        {
+            viewModel.SetMajorTopicProgressCommand.Execute(node);
+        }
+    }
+
     private void RenameTopicMenuItem_Click(object sender, RoutedEventArgs e)
     {
         if (DataContext is TopicTreeViewModel viewModel

@@ -19,37 +19,48 @@
             </TreeView.ItemContainerStyle>
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                    <TextBlock Padding="2">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="TextWrapping" Value="NoWrap"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsMajorTopic}" Value="True">
-                                        <Setter Property="TextWrapping" Value="Wrap"/>
-                                        <Setter Property="MaxWidth">
-                                            <Setter.Value>
-                                                <Binding ElementName="Tree" Path="ActualWidth"
-                                                         Converter="{StaticResource WidthMinusMarginConverter}"
-                                                         ConverterParameter="40"/>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                        <Run Text="{Binding Name, Mode=OneWay}"/>
-                        <Run Text="{Binding ProgressLabel, Mode=OneWay}" Foreground="Gray"/>
-                        <TextBlock.ContextMenu>
-                            <ContextMenu>
-                                <MenuItem Header="소주제 추가"
-                                          Click="AddMinorTopicMenuItem_Click"
-                                          Visibility="{Binding IsMajorTopic, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                <Separator Visibility="{Binding IsMajorTopic, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                <MenuItem Header="이름변경" Click="RenameTopicMenuItem_Click"/>
-                                <MenuItem Header="삭제" Click="DeleteTopicMenuItem_Click"/>
-                            </ContextMenu>
-                        </TextBlock.ContextMenu>
-                    </TextBlock>
+                    <Grid>
+                        <!-- 대주제: progress bar 모양 안에 이름을 표시한다. 채움 폭은 Progress(1~10)에 비례하고,
+                             채움 색은 game-platform 프로젝트의 평점 슬라이더처럼 값 구간별로 바뀐다
+                             (07-ui-layout.md "좌측 패널", 04-topic-management.md "진행도 설정"). -->
+                        <Grid Margin="2" MinHeight="24"
+                              Visibility="{Binding IsMajorTopic, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{Binding Progress, Converter={StaticResource ProgressStarWidthConverter}, ConverterParameter=Fill}"/>
+                                <ColumnDefinition Width="{Binding Progress, Converter={StaticResource ProgressStarWidthConverter}, ConverterParameter=Empty}"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.ColumnSpan="2" CornerRadius="11" Background="#E3E3E3"/>
+                            <Border Grid.Column="0" CornerRadius="11,0,0,11"
+                                    Background="{Binding Progress, Converter={StaticResource MajorTopicProgressColorConverter}}"/>
+                            <TextBlock Grid.ColumnSpan="2" Text="{Binding Name, Mode=OneWay}"
+                                       TextWrapping="Wrap" TextAlignment="Center"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Margin="10,3" Foreground="White" FontWeight="SemiBold"
+                                       MaxWidth="{Binding ActualWidth, ElementName=Tree, Converter={StaticResource WidthMinusMarginConverter}, ConverterParameter=48}"/>
+                            <Grid.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="소주제 추가" Click="AddMinorTopicMenuItem_Click"/>
+                                    <MenuItem Header="진행도 설정" Click="SetProgressMenuItem_Click"/>
+                                    <Separator/>
+                                    <MenuItem Header="이름변경" Click="RenameTopicMenuItem_Click"/>
+                                    <MenuItem Header="삭제" Click="DeleteTopicMenuItem_Click"/>
+                                </ContextMenu>
+                            </Grid.ContextMenu>
+                        </Grid>
+
+                        <!-- 소주제: 기존과 동일한 한 줄 텍스트 표시 -->
+                        <TextBlock Padding="2"
+                                   Visibility="{Binding IsMajorTopic, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                            <Run Text="{Binding Name, Mode=OneWay}"/>
+                            <Run Text="{Binding ProgressLabel, Mode=OneWay}" Foreground="Gray"/>
+                            <TextBlock.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="이름변경" Click="RenameTopicMenuItem_Click"/>
+                                    <MenuItem Header="삭제" Click="DeleteTopicMenuItem_Click"/>
+                                </ContextMenu>
+                            </TextBlock.ContextMenu>
+                        </TextBlock>
+                    </Grid>
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
         </TreeView>
