@@ -10,11 +10,13 @@
         </StackPanel>
 
         <TreeView x:Name="Tree" ItemsSource="{Binding Topics}"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                   SelectedItemChanged="Tree_SelectedItemChanged">
             <TreeView.ItemContainerStyle>
                 <Style TargetType="TreeViewItem">
                     <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
                     <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                 </Style>
             </TreeView.ItemContainerStyle>
             <TreeView.ItemTemplate>
@@ -22,9 +24,14 @@
                     <Grid>
                         <!-- 대주제: progress bar 모양 안에 이름을 표시한다. 채움 폭은 Progress(1~10)에 비례하고,
                              채움 색은 game-platform 프로젝트의 평점 슬라이더처럼 값 구간별로 바뀐다
-                             (07-ui-layout.md "좌측 패널", 04-topic-management.md "진행도 설정"). -->
+                             (07-ui-layout.md "좌측 패널", 04-topic-management.md "진행도 설정").
+                             Width를 명시적으로 걸어야 줄바꿈이 실제로 동작한다 — TreeView의 아이템 패널은
+                             가상화 때문에 가로 방향을 항상 무한대로 측정해서, HorizontalScrollBarVisibility만
+                             "Disabled"로 바꿔서는 줄바꿈도 안 되고 폭도 안 줄어든다(그래서 스크롤바는 사라져도
+                             텍스트가 중간에서 잘렸다 — 2026-09-14 확인). ScrollViewer.HorizontalScrollBarVisibility
+                             ="Disabled"는 이 Width 계산이 1~2px 어긋나도 스크롤바가 절대 뜨지 않게 하는 안전장치로 남겨둔다. -->
                         <Grid Margin="2" MinHeight="24"
-                              Width="{Binding ActualWidth, ElementName=Tree, Converter={StaticResource WidthMinusMarginConverter}, ConverterParameter=44}"
+                              Width="{Binding ActualWidth, ElementName=Tree, Converter={StaticResource WidthMinusMarginConverter}, ConverterParameter=56}"
                               Visibility="{Binding IsMajorTopic, Converter={StaticResource BoolToVisibilityConverter}}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="{Binding Progress, Converter={StaticResource ProgressStarWidthConverter}, ConverterParameter=Fill}"/>
@@ -48,8 +55,12 @@
                             </Grid.ContextMenu>
                         </Grid>
 
-                        <!-- 소주제: 기존과 동일한 한 줄 텍스트 표시 -->
-                        <TextBlock Padding="2"
+                        <!-- 소주제: 한 줄 텍스트 표시. 가로 스크롤이 없으므로 폭을 넘으면 말줄임표로 자른다
+                             (2026-09-14 변경 — 이전엔 가로 스크롤로 봤지만, 대주제 진행도 막대 도입으로 트리의
+                             가로 스크롤 자체를 껐다). 말줄임표가 실제로 동작하려면 대주제와 같은 이유로
+                             Width를 명시적으로 걸어야 한다. -->
+                        <TextBlock Padding="2" TextTrimming="CharacterEllipsis"
+                                   Width="{Binding ActualWidth, ElementName=Tree, Converter={StaticResource WidthMinusMarginConverter}, ConverterParameter=56}"
                                    Visibility="{Binding IsMajorTopic, Converter={StaticResource InverseBoolToVisibilityConverter}}">
                             <Run Text="{Binding Name, Mode=OneWay}"/>
                             <Run Text="{Binding ProgressLabel, Mode=OneWay}" Foreground="Gray"/>
