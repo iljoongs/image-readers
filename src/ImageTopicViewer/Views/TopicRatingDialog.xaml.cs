@@ -2,15 +2,15 @@ using System.Windows;
 
 namespace ImageTopicViewer.Views;
 
-public partial class TopicProgressDialog : Window
+public partial class TopicRatingDialog : Window
 {
     public int SelectedValue { get; private set; }
 
-    public TopicProgressDialog(string topicName, int initialValue)
+    public TopicRatingDialog(string topicName, int initialValue)
     {
         InitializeComponent();
-        Title = "진행도 설정";
-        MessageText.Text = $"'{topicName}'의 진행도(1~10)를 선택하세요.";
+        Title = "평점 설정";
+        MessageText.Text = $"'{topicName}'의 평점(1~10)을 선택하세요.";
 
         SelectedValue = Math.Clamp(initialValue, 1, 10);
         ValueSlider.Value = SelectedValue;

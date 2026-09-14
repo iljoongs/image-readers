@@ -131,23 +131,23 @@ public partial class TopicTreeViewModel : ObservableObject
         }
     }
 
-    /// <summary>팝업 메뉴 "진행도 설정" → 대화상자에서 1~10 값을 골라 대주제의 progress bar에 반영한다 (04-topic-management.md).</summary>
+    /// <summary>팝업 메뉴 "평점 설정" → 대화상자에서 1~10 값을 골라 대주제의 progress bar에 반영한다 (04-topic-management.md).</summary>
     [RelayCommand]
-    private void SetMajorTopicProgress(TopicNode? node)
+    private void SetMajorTopicRating(TopicNode? node)
     {
         if (node is not { IsMajorTopic: true })
         {
             return;
         }
 
-        var dialog = new TopicProgressDialog(node.Name, node.Progress)
+        var dialog = new TopicRatingDialog(node.Name, node.Rating)
         {
             Owner = Application.Current.MainWindow,
         };
 
         if (dialog.ShowDialog() == true)
         {
-            node.Progress = dialog.SelectedValue;
+            node.Rating = dialog.SelectedValue;
         }
     }
 

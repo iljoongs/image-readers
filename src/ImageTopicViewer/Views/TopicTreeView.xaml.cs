@@ -29,12 +29,12 @@ public partial class TopicTreeView : UserControl
         }
     }
 
-    private void SetProgressMenuItem_Click(object sender, RoutedEventArgs e)
+    private void SetRatingMenuItem_Click(object sender, RoutedEventArgs e)
     {
         if (DataContext is TopicTreeViewModel viewModel
             && sender is MenuItem { DataContext: TopicNode node })
         {
-            viewModel.SetMajorTopicProgressCommand.Execute(node);
+            viewModel.SetMajorTopicRatingCommand.Execute(node);
         }
     }
 

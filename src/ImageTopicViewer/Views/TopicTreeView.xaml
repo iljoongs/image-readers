@@ -22,9 +22,9 @@
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                     <Grid>
-                        <!-- 대주제: progress bar 모양 안에 이름을 표시한다. 채움 폭은 Progress(1~10)에 비례하고,
+                        <!-- 대주제: progress bar 모양 안에 이름을 표시한다. 채움 폭은 Rating(1~10)에 비례하고,
                              채움 색은 game-platform 프로젝트의 평점 슬라이더처럼 값 구간별로 바뀐다
-                             (07-ui-layout.md "좌측 패널", 04-topic-management.md "진행도 설정").
+                             (07-ui-layout.md "좌측 패널", 04-topic-management.md "평점 설정").
                              Width를 명시적으로 걸어야 줄바꿈이 실제로 동작한다 — TreeView의 아이템 패널은
                              가상화 때문에 가로 방향을 항상 무한대로 측정해서, HorizontalScrollBarVisibility만
                              "Disabled"로 바꿔서는 줄바꿈도 안 되고 폭도 안 줄어든다(그래서 스크롤바는 사라져도
@@ -34,12 +34,12 @@
                               Width="{Binding ActualWidth, ElementName=Tree, Converter={StaticResource WidthMinusMarginConverter}, ConverterParameter=56}"
                               Visibility="{Binding IsMajorTopic, Converter={StaticResource BoolToVisibilityConverter}}">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="{Binding Progress, Converter={StaticResource ProgressStarWidthConverter}, ConverterParameter=Fill}"/>
-                                <ColumnDefinition Width="{Binding Progress, Converter={StaticResource ProgressStarWidthConverter}, ConverterParameter=Empty}"/>
+                                <ColumnDefinition Width="{Binding Rating, Converter={StaticResource RatingStarWidthConverter}, ConverterParameter=Fill}"/>
+                                <ColumnDefinition Width="{Binding Rating, Converter={StaticResource RatingStarWidthConverter}, ConverterParameter=Empty}"/>
                             </Grid.ColumnDefinitions>
                             <Border Grid.ColumnSpan="2" CornerRadius="11" Background="#E3E3E3"/>
                             <Border Grid.Column="0" CornerRadius="11,0,0,11"
-                                    Background="{Binding Progress, Converter={StaticResource MajorTopicProgressColorConverter}}"/>
+                                    Background="{Binding Rating, Converter={StaticResource MajorTopicRatingColorConverter}}"/>
                             <TextBlock Grid.ColumnSpan="2" Text="{Binding Name, Mode=OneWay}"
                                        TextWrapping="Wrap" TextAlignment="Center"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -47,7 +47,7 @@
                             <Grid.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem Header="소주제 추가" Click="AddMinorTopicMenuItem_Click"/>
-                                    <MenuItem Header="진행도 설정" Click="SetProgressMenuItem_Click"/>
+                                    <MenuItem Header="평점 설정" Click="SetRatingMenuItem_Click"/>
                                     <Separator/>
                                     <MenuItem Header="이름변경" Click="RenameTopicMenuItem_Click"/>
                                     <MenuItem Header="삭제" Click="DeleteTopicMenuItem_Click"/>

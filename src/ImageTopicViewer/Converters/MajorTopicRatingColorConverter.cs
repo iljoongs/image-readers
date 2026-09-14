@@ -5,9 +5,9 @@ using System.Windows.Media;
 
 namespace ImageTopicViewer.Converters;
 
-/// <summary>대주제 진행도(1~10)를 game-platform 프로젝트의 평점 슬라이더와 같은 5구간 색
+/// <summary>대주제 평점(1~10)을 game-platform 프로젝트의 평점 슬라이더와 같은 5구간 색
 /// (청록 → 하늘색 → 보라 → 분홍 → 주황, 2단계마다 전환)으로 바꾼다 (07-ui-layout.md "좌측 패널").</summary>
-public class MajorTopicProgressColorConverter : IValueConverter
+public class MajorTopicRatingColorConverter : IValueConverter
 {
     private static readonly (int UpperBound, Color Start, Color End)[] Bands =
     {
@@ -20,8 +20,8 @@ public class MajorTopicProgressColorConverter : IValueConverter
 
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        var progress = value is int i ? i : 1;
-        var band = Array.Find(Bands, b => progress <= b.UpperBound);
+        var rating = value is int i ? i : 1;
+        var band = Array.Find(Bands, b => rating <= b.UpperBound);
         if (band == default)
         {
             band = Bands[^1];

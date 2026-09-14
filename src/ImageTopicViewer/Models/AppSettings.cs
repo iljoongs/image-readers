@@ -27,10 +27,10 @@ public class AppSettings
     public Dictionary<string, TopicProgressEntry> TopicProgress { get; set; } = new();
 
     /// <summary>
-    /// 대주제별 진행도(1~10, 팝업 메뉴 "진행도 설정" — 04-topic-management.md, 07-ui-layout.md). 대주제 이름을 키로 한다.
+    /// 대주제별 평점(1~10, 팝업 메뉴 "평점 설정" — 04-topic-management.md, 07-ui-layout.md). 대주제 이름을 키로 한다.
     /// TopicProgress와 동일하게, 이름을 변경하면 키가 달라져 기록이 끊기는 건 알려진 제약이다.
     /// </summary>
-    public Dictionary<string, int> MajorTopicProgress { get; set; } = new();
+    public Dictionary<string, int> MajorTopicRating { get; set; } = new();
 }
 
 public class TopicProgressEntry

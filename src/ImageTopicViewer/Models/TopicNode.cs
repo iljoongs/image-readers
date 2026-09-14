@@ -27,10 +27,10 @@ public partial class TopicNode : ObservableObject
     /// <summary>트리에 이름 옆에 붙는 "(N/전체)" 표시. 본 적 없으면 빈 문자열.</summary>
     public string ProgressLabel => ViewedIndex.HasValue ? $" ({ViewedIndex.Value + 1}/{ViewedTotalCount})" : string.Empty;
 
-    /// <summary>대주제 진행도(1~10). 팝업 메뉴 "진행도 설정"으로 바꾼다 — progress bar 모양의 채움 정도와 색을 결정한다
+    /// <summary>대주제 평점(1~10). 팝업 메뉴 "평점 설정"으로 바꾼다 — progress bar 모양의 채움 정도와 색을 결정한다
     /// (07-ui-layout.md "좌측 패널"). 소주제는 사용하지 않는다.</summary>
     [ObservableProperty]
-    private int _progress = 1;
+    private int _rating = 1;
 
     public string FullPath { get; set; }
     public bool IsMajorTopic { get; init; }
