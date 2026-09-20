@@ -63,6 +63,11 @@ public partial class MainViewModel : ObservableObject
             settings.LastMajorTopicName = major?.Name;
             settings.LastMinorTopicName = selected.Name;
         }
+        else if (selected is { IsMajorTopic: true })
+        {
+            settings.LastMajorTopicName = selected.Name;
+            settings.LastMinorTopicName = null;
+        }
         else
         {
             settings.LastMajorTopicName = null;

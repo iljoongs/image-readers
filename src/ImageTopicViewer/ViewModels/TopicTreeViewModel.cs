@@ -328,7 +328,7 @@ public partial class TopicTreeViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 세션 복원용: 이름으로 소주제를 찾아 선택 상태로 만든다.
+    /// 세션 복원용: 이름으로 대주제(minorName이 null이면 대주제 자체) 또는 소주제를 찾아 선택 상태로 만든다.
     /// 대주제/소주제가 더 이상 존재하지 않으면 조용히 아무것도 선택하지 않는다 (02-architecture.md 복원 예외 처리).
     /// </summary>
     public void SelectByName(string? majorName, string? minorName)
@@ -348,6 +348,8 @@ public partial class TopicTreeViewModel : ObservableObject
 
         if (minorName is null)
         {
+            major.IsSelected = true;
+            SelectedNode = major;
             return;
         }
 
