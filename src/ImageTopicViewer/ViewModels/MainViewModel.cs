@@ -46,6 +46,7 @@ public partial class MainViewModel : ObservableObject
         TopicTree.SelectByName(settings.LastMajorTopicName, settings.LastMinorTopicName);
         IsSingleView = settings.LastIsSingleView;
         ContinuousPage.ZoomPercent = settings.LastZoomPercent;
+        ContinuousPage.ScrollSpeedMultiplier = settings.LastScrollSpeedMultiplier;
 
         if (ContinuousPage.Images.Count > 0)
         {
@@ -77,6 +78,7 @@ public partial class MainViewModel : ObservableObject
         settings.LastIsSingleView = IsSingleView;
         settings.LastImageIndex = ContinuousPage.CurrentIndex;
         settings.LastZoomPercent = ContinuousPage.ZoomPercent;
+        settings.LastScrollSpeedMultiplier = ContinuousPage.ScrollSpeedMultiplier;
         settings.TopicProgress = CollectTopicProgress();
         settings.MajorTopicRating = CollectMajorTopicRating();
     }

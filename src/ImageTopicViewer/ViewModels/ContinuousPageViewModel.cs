@@ -25,15 +25,10 @@ public partial class ContinuousPageViewModel : ObservableObject
         .Select(i => new ZoomOption($"{i * 10}%", i * 10))
         .ToList();
 
-    /// <summary>연속보기 스크롤 배속 콤보박스 항목 (06-view-modes.md).</summary>
-    public static readonly IReadOnlyList<ScrollSpeedOption> ScrollSpeedOptions = new List<ScrollSpeedOption>
-    {
-        new("x1", 1),
-        new("x2", 2),
-        new("x3", 3),
-        new("x4", 4),
-        new("x5", 5),
-    };
+    /// <summary>연속보기 스크롤 배속 콤보박스 항목. x1~x10, 1 단위 (06-view-modes.md).</summary>
+    public static readonly IReadOnlyList<ScrollSpeedOption> ScrollSpeedOptions = Enumerable.Range(1, 10)
+        .Select(i => new ScrollSpeedOption($"x{i}", i))
+        .ToList();
 
     private readonly IImageStorageService _imageStorageService;
     private readonly IImageSourceProvider _imageSourceProvider;
