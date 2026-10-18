@@ -42,6 +42,12 @@ public class AppSettings
     /// <summary>대주제별 커버(타이틀) 이미지 경로(`CoverImageStore`가 covers/ 폴더에 복사한 파일, 07-ui-layout.md "홈 화면").
     /// 대주제 이름을 키로 한다. 위 평점과 동일한 이름 변경 제약이 있다.</summary>
     public Dictionary<string, string> MajorTopicCoverImagePath { get; set; } = new();
+
+    /// <summary>대주제별로 가장 최근에 선택했던 소주제 이름(2026-10-19 추가). 대주제 이름을 키로 하며, 홈 화면
+    /// 카드를 클릭했을 때 이 소주제로 바로 이동하는 데 쓴다(07-ui-layout.md "홈 화면"). 위 평점과 동일한 이름
+    /// 변경 제약이 있다. 이 필드가 생기기 전에는 기록이 없었으므로, 그런 대주제는 처음 소주제를 열 때부터
+    /// 새로 쌓인다.</summary>
+    public Dictionary<string, string> MajorTopicLastMinorTopic { get; set; } = new();
 }
 
 public class TopicProgressEntry

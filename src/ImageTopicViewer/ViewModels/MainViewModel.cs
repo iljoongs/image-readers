@@ -18,6 +18,20 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isHomeScreen = true;
 
+    /// <summary>홈 화면 카드 확대/축소 배율(%). 185x260이 100%다. Microsoft Edge의 확대/축소 단계를 그대로 쓴다
+    /// (07-ui-layout.md "홈 화면"). 세션 간 저장하지 않고 앱을 실행할 때마다 100%로 시작한다.</summary>
+    private static readonly double[] HomeZoomLevels =
+    {
+        25, 33, 50, 67, 75, 80, 90, 100, 110, 125, 150, 175, 200, 250, 300, 400, 500,
+    };
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HomeZoomScale))]
+    private double _homeZoomPercent = 100;
+
+    /// <summary>LayoutTransform에 바로 바인딩하는 배율(1.0 = 100%).</summary>
+    public double HomeZoomScale => HomeZoomPercent / 100.0;
+
     public string ViewModeToggleLabel => IsSingleView ? "연속보기로 전환" : "단일보기로 전환";
 
     /// <summary>타이틀바에 현재 뷰 모드를 표시한다.</summary>
@@ -48,6 +62,7 @@ public partial class MainViewModel : ObservableObject
         ApplyMajorTopicRating(settings.MajorTopicRating);
         ApplyMajorTopicGenre(settings.MajorTopicGenre);
         ApplyMajorTopicCoverImagePath(settings.MajorTopicCoverImagePath);
+        ApplyMajorTopicLastMinorTopic(settings.MajorTopicLastMinorTopic);
 
         TopicTree.SelectByName(settings.LastMajorTopicName, settings.LastMinorTopicName);
         IsSingleView = settings.LastIsSingleView;
@@ -89,6 +104,7 @@ public partial class MainViewModel : ObservableObject
         settings.MajorTopicRating = CollectMajorTopicRating();
         settings.MajorTopicGenre = CollectMajorTopicGenre();
         settings.MajorTopicCoverImagePath = CollectMajorTopicCoverImagePath();
+        settings.MajorTopicLastMinorTopic = CollectMajorTopicLastMinorTopic();
     }
 
     [RelayCommand]
@@ -97,7 +113,8 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void GoHome() => IsHomeScreen = true;
 
-    /// <summary>홈 화면 카드를 클릭해 해당 대주제를 연다(트리에서 선택+펼침, 홈 화면은 숨긴다).</summary>
+    /// <summary>홈 화면 카드를 클릭해 해당 대주제를 연다 — 최근에 보던 소주제가 있으면 그 소주제로 바로
+    /// 이동하고, 없으면 대주제만 펼친다(홈 화면은 숨긴다). 07-ui-layout.md "홈 화면" 참조.</summary>
     [RelayCommand]
     private void OpenMajorTopic(TopicNode? node)
     {
@@ -106,9 +123,37 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        TopicTree.SelectedNode = node;
+        var lastMinor = node.LastViewedMinorName is { } name
+            ? node.Children.FirstOrDefault(c => c.Name == name)
+            : null;
+
+        node.IsExpanded = true;
+        TopicTree.SelectedNode = lastMinor ?? node;
         IsHomeScreen = false;
     }
+
+    /// <summary>홈 화면의 Ctrl+스크롤 확대/축소 — Edge 단계 목록에서 한 칸 위/아래로 이동한다.</summary>
+    public void AdjustHomeZoom(int direction)
+    {
+        var currentIndex = Array.IndexOf(HomeZoomLevels, HomeZoomPercent);
+        if (currentIndex < 0)
+        {
+            currentIndex = Array.FindIndex(HomeZoomLevels, level => level >= HomeZoomPercent);
+            if (currentIndex < 0)
+            {
+                currentIndex = HomeZoomLevels.Length - 1;
+            }
+        }
+
+        var newIndex = Math.Clamp(currentIndex + direction, 0, HomeZoomLevels.Length - 1);
+        HomeZoomPercent = HomeZoomLevels[newIndex];
+    }
+
+    [RelayCommand]
+    private void ZoomHomeIn() => AdjustHomeZoom(1);
+
+    [RelayCommand]
+    private void ZoomHomeOut() => AdjustHomeZoom(-1);
 
     private void OnTopicTreePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -121,6 +166,23 @@ public partial class MainViewModel : ObservableObject
         var minorTopic = node is { IsMajorTopic: false } ? node : null;
         ContinuousPage.LoadSubtopic(minorTopic);
         UpdateCurrentTopicProgress();
+        RememberLastViewedMinorTopic(minorTopic);
+    }
+
+    /// <summary>소주제를 선택할 때마다 그 부모 대주제에 "최근에 본 소주제"로 기록한다 — 홈 화면 카드를
+    /// 클릭했을 때 이 소주제로 바로 이동하는 데 쓴다 (07-ui-layout.md "홈 화면").</summary>
+    private void RememberLastViewedMinorTopic(TopicNode? minorTopic)
+    {
+        if (minorTopic is null)
+        {
+            return;
+        }
+
+        var major = TopicTree.Topics.FirstOrDefault(t => t.Children.Contains(minorTopic));
+        if (major is not null)
+        {
+            major.LastViewedMinorName = minorTopic.Name;
+        }
     }
 
     private void OnContinuousPagePropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -244,4 +306,25 @@ public partial class MainViewModel : ObservableObject
         TopicTree.Topics
             .Where(major => !string.IsNullOrEmpty(major.CoverImagePath))
             .ToDictionary(major => major.Name, major => major.CoverImagePath!);
+
+    private void ApplyMajorTopicLastMinorTopic(Dictionary<string, string>? lastMinorByMajor)
+    {
+        if (lastMinorByMajor is null || lastMinorByMajor.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var major in TopicTree.Topics)
+        {
+            if (lastMinorByMajor.TryGetValue(major.Name, out var value))
+            {
+                major.LastViewedMinorName = value;
+            }
+        }
+    }
+
+    private Dictionary<string, string> CollectMajorTopicLastMinorTopic() =>
+        TopicTree.Topics
+            .Where(major => !string.IsNullOrEmpty(major.LastViewedMinorName))
+            .ToDictionary(major => major.Name, major => major.LastViewedMinorName!);
 }

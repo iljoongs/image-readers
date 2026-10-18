@@ -258,19 +258,14 @@ public partial class TopicTreeViewModel : ObservableObject
             return;
         }
 
-        var oldCoverPath = node.CoverImagePath;
-
         try
         {
-            node.CoverImagePath = CoverImageStore.Save(dialog.FileName);
+            node.CoverImagePath = CoverImageStore.Save(dialog.FileName, node.Name);
         }
         catch (IOException ex)
         {
             MessageBox.Show(ex.Message, "커버 이미지 설정 실패", MessageBoxButton.OK, MessageBoxImage.Error);
-            return;
         }
-
-        CoverImageStore.TryDelete(oldCoverPath);
     }
 
     [RelayCommand]
@@ -296,6 +291,8 @@ public partial class TopicTreeViewModel : ObservableObject
             return;
         }
 
+        var oldName = node.Name;
+
         try
         {
             _repository.RenameTopic(node, dialog.InputText);
@@ -309,6 +306,17 @@ public partial class TopicTreeViewModel : ObservableObject
         {
             MessageBox.Show(ex.Message, "이름 변경 실패", MessageBoxButton.OK, MessageBoxImage.Error);
             return;
+        }
+
+        // 커버 이미지는 대주제 이름으로 파일명을 짓기 때문에(CoverImageStore), 이름이 바뀌면 파일도 같이 옮겨야
+        // 평점/장르와 달리 끊기지 않는다.
+        if (node.IsMajorTopic && node.CoverImagePath is { } coverPath)
+        {
+            var renamedPath = CoverImageStore.Rename(coverPath, oldName, node.Name);
+            if (renamedPath is not null)
+            {
+                node.CoverImagePath = renamedPath;
+            }
         }
 
         // 이름이 바뀌었으니 정렬 순서상 위치도 다시 맞춘다.

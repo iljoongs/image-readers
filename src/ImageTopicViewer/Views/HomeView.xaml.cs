@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using ImageTopicViewer.Models;
 using ImageTopicViewer.ViewModels;
 
@@ -10,6 +11,27 @@ public partial class HomeView : UserControl
     public HomeView()
     {
         InitializeComponent();
+    }
+
+    // ----- 확대/축소 (Ctrl+스크롤, 06-view-modes.md의 ContinuousPageView와 동일한 패턴) -----
+
+    private void RootScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel || Keyboard.Modifiers != ModifierKeys.Control)
+        {
+            return;
+        }
+
+        if (e.Delta > 0)
+        {
+            viewModel.ZoomHomeInCommand.Execute(null);
+        }
+        else
+        {
+            viewModel.ZoomHomeOutCommand.Execute(null);
+        }
+
+        e.Handled = true;
     }
 
     private void Card_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)

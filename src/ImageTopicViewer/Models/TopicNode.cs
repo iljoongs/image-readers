@@ -43,6 +43,12 @@ public partial class TopicNode : ObservableObject
     [ObservableProperty]
     private string? _genre;
 
+    /// <summary>이 대주제에서 가장 최근에 선택했던 소주제 이름. 홈 화면 카드를 클릭하면 이 소주제로 바로
+    /// 이동한다(null이면 대주제만 펼친다) — `MainViewModel`이 소주제 선택 때마다 갱신한다 (07-ui-layout.md
+    /// "홈 화면"). 소주제는 사용하지 않는다.</summary>
+    [ObservableProperty]
+    private string? _lastViewedMinorName;
+
     public string FullPath { get; set; }
     public bool IsMajorTopic { get; init; }
 

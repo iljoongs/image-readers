@@ -1,0 +1,56 @@
+using System.IO;
+using System.Windows.Media.Imaging;
+
+namespace ImageTopicViewer.Services;
+
+/// <summary>
+/// 로컬 파일 경로에서 <see cref="BitmapImage"/>를 즉시 전부 읽어들여(반환 즉시 파일 핸들 해제) 만든다.
+/// game-platform 프로젝트의 동명 헬퍼를 그대로 가져왔다 (02-architecture.md, 07-ui-layout.md "홈 화면").
+/// </summary>
+/// <remarks>
+/// WPF의 <see cref="BitmapImage"/>는 기본 캐시 옵션(지연 로딩)으로 만들면 화면에 표시되는 동안 원본 파일을
+/// 계속 열어둔다. 그 상태에서 같은 경로에 새 커버 이미지를 덮어쓰려 하면 "다른 프로세스가 파일을 사용 중"이라는
+/// 오류가 난다. <see cref="BitmapCacheOption.OnLoad"/>로 로드 시점에 픽셀 데이터를 전부 메모리로 읽고
+/// <see cref="System.Windows.Freezable.Freeze"/>하면 이 문제가 사라진다.
+///
+/// 별개로, WPF는 같은 URI로 다시 로드하면 디스크를 다시 읽지 않고 내부 이미지 캐시(URI 기준)에서 예전
+/// 픽셀 데이터를 그대로 돌려주는 경우가 있다(항상 같은 경로에 덮어쓰는 파일에서 특히 문제가 된다 — 대주제의
+/// 커버 이미지를 교체하면 같은 경로를 덮어쓰므로 해당한다). <see cref="BitmapCreateOptions.IgnoreImageCache"/>로
+/// 이 캐시를 건너뛰고 항상 디스크에서 다시 읽는다.
+/// </remarks>
+public static class ImageLoadHelper
+{
+    /// <summary>
+    /// <paramref name="decodePixelWidth"/>를 지정하면 그 너비로만 디코딩한다(세로는 원본 비율에 맞춰 자동 계산됨).
+    /// </summary>
+    public static BitmapImage? Load(string? path, int? decodePixelWidth = null)
+    {
+        if (string.IsNullOrEmpty(path) || !File.Exists(path))
+        {
+            return null;
+        }
+
+        try
+        {
+            var bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
+            if (decodePixelWidth is { } width)
+            {
+                bitmap.DecodePixelWidth = width;
+            }
+
+            bitmap.UriSource = new Uri(path);
+            bitmap.EndInit();
+            bitmap.Freeze();
+            return bitmap;
+        }
+        catch (Exception)
+        {
+            // 확장자만 이미지고 실제 내용은 디코딩할 수 없는 파일이 섞여 있어도 그 항목만 빈 이미지로
+            // 보이고, 앱 전체가 죽지는 않게 한다(game-platform ImageLoadHelper와 동일한 방어).
+            return null;
+        }
+    }
+}
