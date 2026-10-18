@@ -18,13 +18,16 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <!-- 대주제 카드: 커버(라운드 엣지, 185x260 기본 크기) + 제목/장르/화수
-                             (sample.png 참고, 07-ui-layout.md "홈 화면"). -->
+                        <!-- 대주제 카드: 썸네일(라운드 엣지, 185x260 기본 크기) + 제목/장르/화수
+                             (sample.png 참고, 07-ui-layout.md "홈 화면"). 썸네일 위로 이미지를 드래그 앤 드롭해도
+                             지정된다(game-platform 프로젝트의 Card_DragOver/Card_Drop과 동일한 방식,
+                             DragDropImageHelper 그대로 가져옴). -->
                         <Border Width="185" Margin="10" Cursor="Hand"
-                                MouseLeftButtonUp="Card_MouseLeftButtonUp">
+                                MouseLeftButtonUp="Card_MouseLeftButtonUp"
+                                AllowDrop="True" DragOver="Card_DragOver" Drop="Card_Drop">
                             <StackPanel>
                                 <Border CornerRadius="12" Width="185" Height="260"
-                                        Background="{Binding CoverImagePath, Converter={StaticResource CoverImageBrushConverter}, ConverterParameter=370}"/>
+                                        Background="{Binding ThumbnailPath, Converter={StaticResource ThumbnailBrushConverter}, ConverterParameter=370}"/>
                                 <TextBlock Text="{Binding Name, Mode=OneWay}" FontWeight="Bold" FontSize="13"
                                            TextTrimming="CharacterEllipsis" Width="185" Margin="0,8,0,2"/>
                                 <TextBlock Text="{Binding Genre, Mode=OneWay}" Foreground="Gray" FontSize="11"
@@ -38,7 +41,7 @@
                                 <ContextMenu>
                                     <MenuItem Header="평점 설정" Click="SetRatingMenuItem_Click"/>
                                     <MenuItem Header="장르 설정" Click="SetGenreMenuItem_Click"/>
-                                    <MenuItem Header="커버 이미지 설정" Click="SetCoverMenuItem_Click"/>
+                                    <MenuItem Header="썸네일 설정" Click="SetThumbnailMenuItem_Click"/>
                                     <Separator/>
                                     <MenuItem Header="이름변경" Click="RenameTopicMenuItem_Click"/>
                                     <MenuItem Header="삭제" Click="DeleteTopicMenuItem_Click"/>

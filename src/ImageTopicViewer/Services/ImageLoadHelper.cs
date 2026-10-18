@@ -9,13 +9,13 @@ namespace ImageTopicViewer.Services;
 /// </summary>
 /// <remarks>
 /// WPF의 <see cref="BitmapImage"/>는 기본 캐시 옵션(지연 로딩)으로 만들면 화면에 표시되는 동안 원본 파일을
-/// 계속 열어둔다. 그 상태에서 같은 경로에 새 커버 이미지를 덮어쓰려 하면 "다른 프로세스가 파일을 사용 중"이라는
+/// 계속 열어둔다. 그 상태에서 같은 경로에 새 썸네일 이미지를 덮어쓰려 하면 "다른 프로세스가 파일을 사용 중"이라는
 /// 오류가 난다. <see cref="BitmapCacheOption.OnLoad"/>로 로드 시점에 픽셀 데이터를 전부 메모리로 읽고
 /// <see cref="System.Windows.Freezable.Freeze"/>하면 이 문제가 사라진다.
 ///
 /// 별개로, WPF는 같은 URI로 다시 로드하면 디스크를 다시 읽지 않고 내부 이미지 캐시(URI 기준)에서 예전
 /// 픽셀 데이터를 그대로 돌려주는 경우가 있다(항상 같은 경로에 덮어쓰는 파일에서 특히 문제가 된다 — 대주제의
-/// 커버 이미지를 교체하면 같은 경로를 덮어쓰므로 해당한다). <see cref="BitmapCreateOptions.IgnoreImageCache"/>로
+/// 썸네일 이미지를 교체하면 같은 경로를 덮어쓰므로 해당한다). <see cref="BitmapCreateOptions.IgnoreImageCache"/>로
 /// 이 캐시를 건너뛰고 항상 디스크에서 다시 읽는다.
 /// </remarks>
 public static class ImageLoadHelper

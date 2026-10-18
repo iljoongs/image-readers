@@ -130,12 +130,12 @@ public partial class TopicTreeView : UserControl
         }
     }
 
-    private void SetCoverMenuItem_Click(object sender, RoutedEventArgs e)
+    private void SetThumbnailMenuItem_Click(object sender, RoutedEventArgs e)
     {
         if (DataContext is TopicTreeViewModel viewModel
             && sender is MenuItem { DataContext: TopicNode node })
         {
-            viewModel.SetMajorTopicCoverCommand.Execute(node);
+            viewModel.SetMajorTopicThumbnailCommand.Execute(node);
         }
     }
 

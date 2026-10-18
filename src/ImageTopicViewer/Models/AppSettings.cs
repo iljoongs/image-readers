@@ -39,9 +39,9 @@ public class AppSettings
     /// 대주제 이름을 키로 한다. 위 평점과 동일한 이름 변경 제약이 있다.</summary>
     public Dictionary<string, string> MajorTopicGenre { get; set; } = new();
 
-    /// <summary>대주제별 커버(타이틀) 이미지 경로(`CoverImageStore`가 covers/ 폴더에 복사한 파일, 07-ui-layout.md "홈 화면").
+    /// <summary>대주제별 썸네일 이미지 경로(`ThumbnailStore`가 thumbnails/ 폴더에 복사한 파일, 07-ui-layout.md "홈 화면").
     /// 대주제 이름을 키로 한다. 위 평점과 동일한 이름 변경 제약이 있다.</summary>
-    public Dictionary<string, string> MajorTopicCoverImagePath { get; set; } = new();
+    public Dictionary<string, string> MajorTopicThumbnailPath { get; set; } = new();
 
     /// <summary>대주제별로 가장 최근에 선택했던 소주제 이름(2026-10-19 추가). 대주제 이름을 키로 하며, 홈 화면
     /// 카드를 클릭했을 때 이 소주제로 바로 이동하는 데 쓴다(07-ui-layout.md "홈 화면"). 위 평점과 동일한 이름

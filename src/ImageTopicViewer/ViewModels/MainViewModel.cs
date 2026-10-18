@@ -61,7 +61,7 @@ public partial class MainViewModel : ObservableObject
         ApplyTopicProgress(settings.TopicProgress);
         ApplyMajorTopicRating(settings.MajorTopicRating);
         ApplyMajorTopicGenre(settings.MajorTopicGenre);
-        ApplyMajorTopicCoverImagePath(settings.MajorTopicCoverImagePath);
+        ApplyMajorTopicThumbnailPath(settings.MajorTopicThumbnailPath);
         ApplyMajorTopicLastMinorTopic(settings.MajorTopicLastMinorTopic);
 
         TopicTree.SelectByName(settings.LastMajorTopicName, settings.LastMinorTopicName);
@@ -103,7 +103,7 @@ public partial class MainViewModel : ObservableObject
         settings.TopicProgress = CollectTopicProgress();
         settings.MajorTopicRating = CollectMajorTopicRating();
         settings.MajorTopicGenre = CollectMajorTopicGenre();
-        settings.MajorTopicCoverImagePath = CollectMajorTopicCoverImagePath();
+        settings.MajorTopicThumbnailPath = CollectMajorTopicThumbnailPath();
         settings.MajorTopicLastMinorTopic = CollectMajorTopicLastMinorTopic();
     }
 
@@ -286,26 +286,26 @@ public partial class MainViewModel : ObservableObject
             .Where(major => !string.IsNullOrEmpty(major.Genre))
             .ToDictionary(major => major.Name, major => major.Genre!);
 
-    private void ApplyMajorTopicCoverImagePath(Dictionary<string, string>? coverPaths)
+    private void ApplyMajorTopicThumbnailPath(Dictionary<string, string>? thumbnailPaths)
     {
-        if (coverPaths is null || coverPaths.Count == 0)
+        if (thumbnailPaths is null || thumbnailPaths.Count == 0)
         {
             return;
         }
 
         foreach (var major in TopicTree.Topics)
         {
-            if (coverPaths.TryGetValue(major.Name, out var value))
+            if (thumbnailPaths.TryGetValue(major.Name, out var value))
             {
-                major.CoverImagePath = value;
+                major.ThumbnailPath = value;
             }
         }
     }
 
-    private Dictionary<string, string> CollectMajorTopicCoverImagePath() =>
+    private Dictionary<string, string> CollectMajorTopicThumbnailPath() =>
         TopicTree.Topics
-            .Where(major => !string.IsNullOrEmpty(major.CoverImagePath))
-            .ToDictionary(major => major.Name, major => major.CoverImagePath!);
+            .Where(major => !string.IsNullOrEmpty(major.ThumbnailPath))
+            .ToDictionary(major => major.Name, major => major.ThumbnailPath!);
 
     private void ApplyMajorTopicLastMinorTopic(Dictionary<string, string>? lastMinorByMajor)
     {

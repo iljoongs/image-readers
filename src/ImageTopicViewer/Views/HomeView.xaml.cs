@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using ImageTopicViewer.Models;
+using ImageTopicViewer.Services;
 using ImageTopicViewer.ViewModels;
 
 namespace ImageTopicViewer.Views;
@@ -43,6 +44,33 @@ public partial class HomeView : UserControl
         }
     }
 
+    // ----- 썸네일 드래그 앤 드롭 (game-platform 프로젝트의 Card_DragOver/Card_Drop과 동일한 방식) -----
+
+    private void Card_DragOver(object sender, DragEventArgs e)
+    {
+        var acceptable = DragDropImageHelper.CanAccept(e.Data);
+        e.Effects = acceptable ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void Card_Drop(object sender, DragEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel
+            || sender is not FrameworkElement { DataContext: TopicNode node })
+        {
+            return;
+        }
+
+        var imagePath = DragDropImageHelper.TryGetImagePath(e.Data, out var isTemporary);
+        if (imagePath is null)
+        {
+            return;
+        }
+
+        viewModel.TopicTree.ApplyThumbnail(node, imagePath, deleteSource: isTemporary);
+        e.Handled = true;
+    }
+
     private void SetRatingMenuItem_Click(object sender, RoutedEventArgs e)
     {
         if (DataContext is MainViewModel viewModel
@@ -61,12 +89,12 @@ public partial class HomeView : UserControl
         }
     }
 
-    private void SetCoverMenuItem_Click(object sender, RoutedEventArgs e)
+    private void SetThumbnailMenuItem_Click(object sender, RoutedEventArgs e)
     {
         if (DataContext is MainViewModel viewModel
             && sender is MenuItem { DataContext: TopicNode node })
         {
-            viewModel.TopicTree.SetMajorTopicCoverCommand.Execute(node);
+            viewModel.TopicTree.SetMajorTopicThumbnailCommand.Execute(node);
         }
     }
 

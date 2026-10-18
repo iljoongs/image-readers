@@ -32,11 +32,12 @@ public partial class TopicNode : ObservableObject
     [ObservableProperty]
     private int _rating = 1;
 
-    /// <summary>대주제 커버(타이틀) 이미지 파일의 절대 경로. 팝업 메뉴 "커버 이미지 설정"으로 지정하며,
-    /// 선택한 파일은 %APPDATA%\ImageTopicViewer\covers\에 복사되어 보관된다(`CoverImageStore`). null이면 미지정.
-    /// 홈 화면 카드에 쓰인다 (07-ui-layout.md "홈 화면"). 소주제는 사용하지 않는다.</summary>
+    /// <summary>대주제 썸네일 이미지 파일의 절대 경로. 팝업 메뉴 "썸네일 설정" 또는 홈 화면 카드로 드래그
+    /// 앤 드롭해서 지정하며, 선택한 파일은 %APPDATA%\ImageTopicViewer\thumbnails\에 복사되어 보관된다
+    /// (`ThumbnailStore`). null이면 미지정. 홈 화면 카드에 쓰인다 (07-ui-layout.md "홈 화면"). 소주제는
+    /// 사용하지 않는다.</summary>
     [ObservableProperty]
-    private string? _coverImagePath;
+    private string? _thumbnailPath;
 
     /// <summary>대주제 장르. 팝업 메뉴 "장르 설정"의 미리 정의된 목록(복수 선택 가능)에서 고르며 "/"로 이어붙인다
     /// (예: "판타지/액션"). 홈 화면 카드에 표시된다. 소주제는 사용하지 않는다.</summary>

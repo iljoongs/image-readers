@@ -5,12 +5,12 @@ using ImageTopicViewer.Services;
 
 namespace ImageTopicViewer.Converters;
 
-/// <summary>대주제 커버 이미지 경로(문자열)를 홈 화면 카드의 Border.Background로 바로 쓸 수 있는 Brush로 바꾼다
+/// <summary>대주제 썸네일 이미지 경로(문자열)를 홈 화면 카드의 Border.Background로 바로 쓸 수 있는 Brush로 바꾼다
 /// (07-ui-layout.md "홈 화면"). `ImageLoadHelper`(game-platform 프로젝트에서 가져온 로딩 방식)로 디코딩하므로,
-/// 커버를 교체해 같은 경로를 덮어써도(`CoverImageStore`) 캐시된 예전 이미지가 아니라 항상 새로 읽는다.
+/// 썸네일을 교체해 같은 경로를 덮어써도(`ThumbnailStore`) 캐시된 예전 이미지가 아니라 항상 새로 읽는다.
 /// ConverterParameter로 DecodePixelWidth(디코딩 너비, 성능/메모리 절약용)를 지정할 수 있다.
 /// 경로가 없거나 디코딩에 실패하면 연회색 placeholder를 반환한다.</summary>
-public class CoverImageBrushConverter : IValueConverter
+public class ThumbnailBrushConverter : IValueConverter
 {
     private static readonly Brush PlaceholderBrush = CreatePlaceholder();
 

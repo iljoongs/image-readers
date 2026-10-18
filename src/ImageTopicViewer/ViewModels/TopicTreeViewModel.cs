@@ -238,9 +238,10 @@ public partial class TopicTreeViewModel : ObservableObject
         }
     }
 
-    /// <summary>팝업 메뉴 "커버 이미지 설정" → 파일을 골라 covers/ 폴더로 복사하고 홈 화면 카드에 반영한다 (04-topic-management.md).</summary>
+    /// <summary>팝업 메뉴 "썸네일 설정" → 파일을 골라 thumbnails/ 폴더로 복사하고 홈 화면 카드에 반영한다
+    /// (04-topic-management.md). 홈 화면 카드로 드래그 앤 드롭하는 방법도 있다(`HomeView.Card_Drop`).</summary>
     [RelayCommand]
-    private void SetMajorTopicCover(TopicNode? node)
+    private void SetMajorTopicThumbnail(TopicNode? node)
     {
         if (node is not { IsMajorTopic: true })
         {
@@ -249,7 +250,7 @@ public partial class TopicTreeViewModel : ObservableObject
 
         var dialog = new Microsoft.Win32.OpenFileDialog
         {
-            Title = "커버 이미지 선택",
+            Title = "썸네일 이미지 선택",
             Filter = "이미지 파일|*.jpg;*.jpeg;*.png;*.bmp;*.gif;*.tif;*.tiff",
         };
 
@@ -258,13 +259,27 @@ public partial class TopicTreeViewModel : ObservableObject
             return;
         }
 
+        ApplyThumbnail(node, dialog.FileName, deleteSource: false);
+    }
+
+    /// <summary>파일 선택 대화상자와 홈 화면 카드 드래그 앤 드롭(`HomeView.Card_Drop`)이 공유하는 저장 로직.</summary>
+    public void ApplyThumbnail(TopicNode node, string sourceImagePath, bool deleteSource)
+    {
         try
         {
-            node.CoverImagePath = CoverImageStore.Save(dialog.FileName, node.Name);
+            var newPath = ThumbnailStore.Save(sourceImagePath, node.Name, deleteSource);
+
+            // ThumbnailStore.Save는 항상 "{대주제 이름}.original.{확장자}"에 저장하므로, 새로 지정한
+            // 이미지가 이전 것과 확장자가 같으면 경로 문자열 자체는 그대로다. ObservableProperty가 생성한
+            // setter는 값이 실제로 바뀔 때만 PropertyChanged를 올리므로, 그냥 대입하면 파일은 새로
+            // 덮어써졌는데 카드 이미지는 갱신되지 않는다(game-platform에서 실제로 겪은 버그) — null로 한 번
+            // 지웠다가 다시 지정해서 항상 알림이 나가게 한다.
+            node.ThumbnailPath = null;
+            node.ThumbnailPath = newPath;
         }
         catch (IOException ex)
         {
-            MessageBox.Show(ex.Message, "커버 이미지 설정 실패", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(ex.Message, "썸네일 설정 실패", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -308,14 +323,14 @@ public partial class TopicTreeViewModel : ObservableObject
             return;
         }
 
-        // 커버 이미지는 대주제 이름으로 파일명을 짓기 때문에(CoverImageStore), 이름이 바뀌면 파일도 같이 옮겨야
+        // 썸네일은 대주제 이름으로 파일명을 짓기 때문에(ThumbnailStore), 이름이 바뀌면 파일도 같이 옮겨야
         // 평점/장르와 달리 끊기지 않는다.
-        if (node.IsMajorTopic && node.CoverImagePath is { } coverPath)
+        if (node.IsMajorTopic && node.ThumbnailPath is { } thumbnailPath)
         {
-            var renamedPath = CoverImageStore.Rename(coverPath, oldName, node.Name);
+            var renamedPath = ThumbnailStore.Rename(thumbnailPath, oldName, node.Name);
             if (renamedPath is not null)
             {
-                node.CoverImagePath = renamedPath;
+                node.ThumbnailPath = renamedPath;
             }
         }
 
