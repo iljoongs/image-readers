@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Media.Imaging;
+using ImageTopicViewer.Views;
 
 namespace ImageTopicViewer.Services;
 
@@ -12,6 +13,9 @@ namespace ImageTopicViewer.Services;
 /// 로컬 파일뿐 아니라 웹 브라우저에서 드래그한 이미지(웹 URL, data: URI, 렌더링된 비트맵)도 지원한다.
 /// game-platform 프로젝트의 동명 헬퍼를 그대로 가져왔다 — 홈 화면 카드의 썸네일 지정에 쓴다
 /// (02-architecture.md, 07-ui-layout.md "홈 화면").
+/// 다만 game-platform 버전에는 없던 "가상 파일"(FileGroupDescriptor/FileContents) 처리를
+/// `VirtualFileDropReader`로 추가했다 — Edge/Chrome에서 웹 이미지를 드래그하면 URL 텍스트 형식 없이
+/// 이 형식**만** 제공하는 경우가 많아, 이게 없으면 그런 드래그는 조용히 무시된다(2026-10-19 사용자 리포트로 확인).
 /// </summary>
 public static class DragDropImageHelper
 {
@@ -30,7 +34,8 @@ public static class DragDropImageHelper
         || data.GetDataPresent(DataFormats.Bitmap)
         || data.GetDataPresent("text/uri-list")
         || data.GetDataPresent(DataFormats.Text)
-        || data.GetDataPresent(DataFormats.Html);
+        || data.GetDataPresent(DataFormats.Html)
+        || VirtualFileDropReader.HasVirtualFiles(data);
 
     /// <summary>
     /// 드롭된 데이터에서 이미지를 파일로 확보해 경로를 반환한다.
@@ -52,6 +57,16 @@ public static class DragDropImageHelper
                 return files[0];
             }
 
+            // 가상 파일(FileGroupDescriptor/FileContents)을 URL 텍스트보다 먼저 시도한다 — 브라우저가 이미
+            // 받아온 실제 픽셀 데이터라, 이 뒤의 자체 HTTP 다운로드(TryDownloadImage)가 핫링크 차단/로그인
+            // 필요 등으로 실패할 만한 이미지도 대개 성공한다.
+            var savedVirtualFile = TrySaveVirtualFile(data);
+            if (savedVirtualFile is not null)
+            {
+                isTemporary = true;
+                return savedVirtualFile;
+            }
+
             foreach (var candidate in ExtractImageCandidates(data))
             {
                 var resolved = ResolveCandidate(candidate);
@@ -71,6 +86,36 @@ public static class DragDropImageHelper
         catch
         {
             // 어떤 형식이든 처리 중 실패하면 이미지 없음으로 취급한다.
+        }
+
+        return null;
+    }
+
+    /// <summary>가상 파일 목록 중 디코딩 가능한 첫 이미지를 임시 파일로 저장한다. 여러 개면 첫 번째만 쓴다
+    /// (카드 썸네일은 하나면 충분하므로). 하나도 못 쓰면 null.</summary>
+    private static string? TrySaveVirtualFile(IDataObject data)
+    {
+        foreach (var virtualFile in VirtualFileDropReader.ReadImageStreams(data))
+        {
+            using (virtualFile.Content)
+            {
+                byte[] bytes;
+                using (var buffer = new MemoryStream())
+                {
+                    virtualFile.Content.CopyTo(buffer);
+                    bytes = buffer.ToArray();
+                }
+
+                if (!IsDecodableImage(bytes))
+                {
+                    continue;
+                }
+
+                var extension = ExtensionFromUrl(virtualFile.FileName ?? string.Empty) ?? ".jpg";
+                var tempPath = Path.Combine(Path.GetTempPath(), $"ImageTopicViewer_{Guid.NewGuid():N}{extension}");
+                File.WriteAllBytes(tempPath, bytes);
+                return tempPath;
+            }
         }
 
         return null;
