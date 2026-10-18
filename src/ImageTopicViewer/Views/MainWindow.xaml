@@ -12,75 +12,91 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- 상단 툴바: 연속보기/단일보기 토글 (06-view-modes.md) -->
-        <Border Grid.Row="0" Padding="8" BorderBrush="#CCCCCC" BorderThickness="0,0,0,1">
-            <DockPanel LastChildFill="False">
-                <!-- 맨 앞: 현재 페이지 번호(1부터) / 전체. 입력해서 이동 가능 (07-ui-layout.md). -->
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
-                            Visibility="{Binding ContinuousPage.ShowImages, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <TextBox x:Name="PageNumberTextBox" Width="45" TextAlignment="Center"
-                             VerticalContentAlignment="Center"
-                             Text="{Binding ContinuousPage.CurrentPageNumber, Mode=TwoWay}"
-                             KeyDown="PageNumberTextBox_KeyDown"
-                             GotFocus="PageNumberTextBox_GotFocus"/>
-                    <TextBlock VerticalAlignment="Center" Margin="4,0,0,0">
-                        <Run Text="/"/>
-                        <Run Text="{Binding ContinuousPage.Images.Count, Mode=OneWay}"/>
-                    </TextBlock>
-                </StackPanel>
+        <!-- 홈 화면(대주제 카드 그리드, sample.png 참고): 앱 실행 시 맨 처음 보이는 화면이다 (07-ui-layout.md "홈 화면").
+             카드를 클릭하면 숨겨지고 아래 기존 화면(툴바+트리+뷰어)이 드러난다. -->
+        <views:HomeView Grid.Row="0" Grid.RowSpan="2"
+                         Visibility="{Binding IsHomeScreen, Converter={StaticResource BoolToVisibilityConverter}}"/>
 
-                <Button DockPanel.Dock="Right" HorizontalAlignment="Right"
-                        Content="{Binding ViewModeToggleLabel}"
-                        Command="{Binding ToggleViewModeCommand}"
-                        Padding="8,4"/>
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="0,0,12,0"
-                            VerticalAlignment="Center">
-                    <TextBlock Text="크기:" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                    <ComboBox ItemsSource="{x:Static vm:ContinuousPageViewModel.ZoomOptions}"
-                              DisplayMemberPath="Label" SelectedValuePath="Percent"
-                              SelectedValue="{Binding ContinuousPage.ZoomPercent, Mode=TwoWay}"
-                              Width="90"/>
-                </StackPanel>
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="0,0,12,0"
-                            VerticalAlignment="Center"
-                            Visibility="{Binding IsSingleView, Converter={StaticResource InverseBoolToVisibilityConverter}}">
-                    <Button Content="맨 위로" Padding="8,4" Margin="0,0,4,0"
-                            Command="{Binding ContinuousPage.ScrollToTopCommand}"/>
-                    <Button Content="맨 아래로" Padding="8,4"
-                            Command="{Binding ContinuousPage.ScrollToBottomCommand}"/>
-                </StackPanel>
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="0,0,12,0"
-                            VerticalAlignment="Center"
-                            Visibility="{Binding IsSingleView, Converter={StaticResource InverseBoolToVisibilityConverter}}">
-                    <TextBlock Text="스크롤 속도:" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                    <ComboBox ItemsSource="{x:Static vm:ContinuousPageViewModel.ScrollSpeedOptions}"
-                              DisplayMemberPath="Label" SelectedValuePath="Multiplier"
-                              SelectedValue="{Binding ContinuousPage.ScrollSpeedMultiplier, Mode=TwoWay}"
-                              Width="60"/>
-                </StackPanel>
-            </DockPanel>
-        </Border>
+        <!-- 기존 화면(툴바+트리+뷰어) 전체를 하나로 묶어 홈 화면일 때 통째로 숨긴다. -->
+        <Grid Grid.Row="0" Grid.RowSpan="2"
+              Visibility="{Binding IsHomeScreen, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="240"/>
-                <ColumnDefinition Width="4"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+            <!-- 상단 툴바: 연속보기/단일보기 토글 (06-view-modes.md) -->
+            <Border Grid.Row="0" Padding="8" BorderBrush="#CCCCCC" BorderThickness="0,0,0,1">
+                <DockPanel LastChildFill="False">
+                    <!-- 맨 앞: 홈 화면으로 돌아가는 버튼, 그 다음 현재 페이지 번호(1부터) / 전체. -->
+                    <Button DockPanel.Dock="Left" Content="홈" Padding="8,4" Margin="0,0,8,0"
+                            Command="{Binding GoHomeCommand}"/>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                Visibility="{Binding ContinuousPage.ShowImages, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBox x:Name="PageNumberTextBox" Width="45" TextAlignment="Center"
+                                 VerticalContentAlignment="Center"
+                                 Text="{Binding ContinuousPage.CurrentPageNumber, Mode=TwoWay}"
+                                 KeyDown="PageNumberTextBox_KeyDown"
+                                 GotFocus="PageNumberTextBox_GotFocus"/>
+                        <TextBlock VerticalAlignment="Center" Margin="4,0,0,0">
+                            <Run Text="/"/>
+                            <Run Text="{Binding ContinuousPage.Images.Count, Mode=OneWay}"/>
+                        </TextBlock>
+                    </StackPanel>
 
-            <!-- 좌측 패널: 주제 트리 (04-topic-management.md) -->
-            <Border Grid.Column="0" BorderBrush="#CCCCCC" BorderThickness="0,0,1,0">
-                <views:TopicTreeView DataContext="{Binding TopicTree}"/>
+                    <Button DockPanel.Dock="Right" HorizontalAlignment="Right"
+                            Content="{Binding ViewModeToggleLabel}"
+                            Command="{Binding ToggleViewModeCommand}"
+                            Padding="8,4"/>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="0,0,12,0"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="크기:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <ComboBox ItemsSource="{x:Static vm:ContinuousPageViewModel.ZoomOptions}"
+                                  DisplayMemberPath="Label" SelectedValuePath="Percent"
+                                  SelectedValue="{Binding ContinuousPage.ZoomPercent, Mode=TwoWay}"
+                                  Width="90"/>
+                    </StackPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="0,0,12,0"
+                                VerticalAlignment="Center"
+                                Visibility="{Binding IsSingleView, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                        <Button Content="맨 위로" Padding="8,4" Margin="0,0,4,0"
+                                Command="{Binding ContinuousPage.ScrollToTopCommand}"/>
+                        <Button Content="맨 아래로" Padding="8,4"
+                                Command="{Binding ContinuousPage.ScrollToBottomCommand}"/>
+                    </StackPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="0,0,12,0"
+                                VerticalAlignment="Center"
+                                Visibility="{Binding IsSingleView, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                        <TextBlock Text="스크롤 속도:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <ComboBox ItemsSource="{x:Static vm:ContinuousPageViewModel.ScrollSpeedOptions}"
+                                  DisplayMemberPath="Label" SelectedValuePath="Multiplier"
+                                  SelectedValue="{Binding ContinuousPage.ScrollSpeedMultiplier, Mode=TwoWay}"
+                                  Width="60"/>
+                    </StackPanel>
+                </DockPanel>
             </Border>
 
-            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="#CCCCCC"/>
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="240"/>
+                    <ColumnDefinition Width="4"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-            <!-- 메인 영역: 연속보기/단일보기 (06-view-modes.md, 07-ui-layout.md). 둘 다 같은 ContinuousPageViewModel을 공유해 이미지 위치를 유지한다. -->
-            <Grid Grid.Column="2">
-                <views:ContinuousPageView DataContext="{Binding ContinuousPage}"
-                                          Visibility="{Binding DataContext.IsSingleView, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
-                <views:SingleImageView DataContext="{Binding ContinuousPage}"
-                                       Visibility="{Binding DataContext.IsSingleView, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                <!-- 좌측 패널: 주제 트리 (04-topic-management.md) -->
+                <Border Grid.Column="0" BorderBrush="#CCCCCC" BorderThickness="0,0,1,0">
+                    <views:TopicTreeView DataContext="{Binding TopicTree}"/>
+                </Border>
+
+                <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="#CCCCCC"/>
+
+                <!-- 메인 영역: 연속보기/단일보기 (06-view-modes.md, 07-ui-layout.md). 둘 다 같은 ContinuousPageViewModel을 공유해 이미지 위치를 유지한다. -->
+                <Grid Grid.Column="2">
+                    <views:ContinuousPageView DataContext="{Binding ContinuousPage}"
+                                              Visibility="{Binding DataContext.IsSingleView, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                    <views:SingleImageView DataContext="{Binding ContinuousPage}"
+                                           Visibility="{Binding DataContext.IsSingleView, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                </Grid>
             </Grid>
         </Grid>
     </Grid>

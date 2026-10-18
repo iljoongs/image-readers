@@ -218,6 +218,61 @@ public partial class TopicTreeViewModel : ObservableObject
         }
     }
 
+    /// <summary>팝업 메뉴 "장르 설정" → 미리 정의된 목록(복수 선택)에서 골라 홈 화면 카드에 반영한다 (04-topic-management.md).</summary>
+    [RelayCommand]
+    private void SetMajorTopicGenre(TopicNode? node)
+    {
+        if (node is not { IsMajorTopic: true })
+        {
+            return;
+        }
+
+        var dialog = new TopicGenreDialog(node.Name, node.Genre)
+        {
+            Owner = Application.Current.MainWindow,
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            node.Genre = dialog.SelectedGenres;
+        }
+    }
+
+    /// <summary>팝업 메뉴 "커버 이미지 설정" → 파일을 골라 covers/ 폴더로 복사하고 홈 화면 카드에 반영한다 (04-topic-management.md).</summary>
+    [RelayCommand]
+    private void SetMajorTopicCover(TopicNode? node)
+    {
+        if (node is not { IsMajorTopic: true })
+        {
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "커버 이미지 선택",
+            Filter = "이미지 파일|*.jpg;*.jpeg;*.png;*.bmp;*.gif;*.tif;*.tiff",
+        };
+
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        var oldCoverPath = node.CoverImagePath;
+
+        try
+        {
+            node.CoverImagePath = CoverImageStore.Save(dialog.FileName);
+        }
+        catch (IOException ex)
+        {
+            MessageBox.Show(ex.Message, "커버 이미지 설정 실패", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        CoverImageStore.TryDelete(oldCoverPath);
+    }
+
     [RelayCommand]
     private void RenameTopic(TopicNode? node)
     {

@@ -51,6 +51,9 @@ ImageTopicViewer/
 - **확대/축소 배율**: 마지막 선택한 % 값(`06-view-modes.md`).
 - **스크롤 배속**: 연속보기 마우스 휠 배속(x1~x10) 마지막 선택값(2026-09-22 추가, `06-view-modes.md` "연속보기").
 - **소주제별 읽던 위치**: `"{대주제}/{소주제}"`를 키로 하는 딕셔너리(`TopicProgress`)에 각 소주제에서 마지막으로 보던 이미지 인덱스와 그때의 전체 이미지 수를 기록한다. 세션 전체에서 열어본 모든 소주제가 대상이며, 트리에서 이름 옆 표시에 쓰인다 (`07-ui-layout.md` "좌측 패널" 참조).
+- **대주제별 평점/장르/커버 이미지 경로**: 대주제 이름을 키로 하는 딕셔너리 3개(`MajorTopicRating`, `MajorTopicGenre`, `MajorTopicCoverImagePath`, 2026-10-18 장르/커버 추가). 홈 화면 카드와 좌측 트리 progress bar에 쓰인다 (`04-topic-management.md` "대주제 평점", "대주제 장르/커버 이미지", `07-ui-layout.md` "홈 화면"). 셋 다 대주제 이름이 바뀌면 키가 달라져 끊기는 동일한 제약이 있다.
+
+**홈 화면 전환 상태는 세션 간 저장되지 않는다**: `MainViewModel.IsHomeScreen`은 앱을 실행할 때마다 항상 `true`로 시작한다(위 "마지막 선택 주제" 복원과는 별개로, 첫 화면은 항상 홈이다). 카드를 클릭하면 `false`로 바뀌어 기존 화면이 드러나고, 툴바의 "홈" 버튼으로 언제든 다시 `true`로 되돌릴 수 있다.
 
 복원 시 예외 처리:
 - 창 위치가 현재 연결된 모니터 구성에서 화면 밖으로 벗어나면(예: 모니터 연결 해제) 기본 위치/크기로 대체한다.
@@ -63,6 +66,7 @@ ImageTopicViewer/
 - **IImageStorageService**: 이미지 파일 이동, PNG 포맷 통일 변환, 파일명 규칙 적용, 순서 변경/삭제(휴지통 이동) 시 재넘버링 로직 담당. (상세는 `03-data-storage.md` 참조)
   - 삭제는 영구 삭제가 아니라 **Windows 휴지통으로 이동**한다 (`Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile`/`DeleteDirectory`의 `RecycleOption.SendToRecycleBin` 사용 검토).
 - **IImageSourceProvider**: 연속보기/단일보기가 화면에 그릴 이미지 소스를 비동기로 제공. v1은 원본 파일(또는 압축 파일 내부 항목)을 그대로 비동기 로드하는 단순 구현이지만, 이 인터페이스 뒤에서 동작하므로 나중에 성능 이슈가 생기면 뷰 코드 변경 없이 썸네일 캐싱 구현으로 교체할 수 있다. `LoadAsync(ImageItem item, ...)`는 `item.IsFromArchive` 여부로 폴더 파일 로드와 zip 엔트리 로드를 분기한다. (`03-data-storage.md`의 "압축 파일 기반 소주제", `06-view-modes.md`, `08-open-decisions.md` 참조)
+- **CoverImageStore**(정적 클래스, 2026-10-18 추가): 홈 화면 카드의 커버 이미지를 사용자가 고르면(`07-ui-layout.md` "홈 화면") 원본 파일을 `%APPDATA%\ImageTopicViewer\covers\`로 복사해 GUID 파일명으로 보관하고, 교체 시 이전 복사본을 정리한다. `ITopicRepository`를 거치지 않는 이유는 이미지가 데이터 폴더(대주제/소주제 폴더) 바깥, 앱 설정 영역에 속하기 때문이다.
 
 ## 데이터 소스에 대한 설계 결정
 별도 DB/JSON 메타데이터 파일 없이, **폴더 구조 + 파일명 자체를 데이터 소스로 사용**한다.

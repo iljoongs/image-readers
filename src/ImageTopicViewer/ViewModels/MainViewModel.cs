@@ -14,6 +14,10 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isSingleView;
 
+    /// <summary>true면 홈 화면(대주제 카드 그리드)을 보여준다. 앱 실행 시 항상 true로 시작한다 (07-ui-layout.md "홈 화면").</summary>
+    [ObservableProperty]
+    private bool _isHomeScreen = true;
+
     public string ViewModeToggleLabel => IsSingleView ? "연속보기로 전환" : "단일보기로 전환";
 
     /// <summary>타이틀바에 현재 뷰 모드를 표시한다.</summary>
@@ -42,6 +46,8 @@ public partial class MainViewModel : ObservableObject
     {
         ApplyTopicProgress(settings.TopicProgress);
         ApplyMajorTopicRating(settings.MajorTopicRating);
+        ApplyMajorTopicGenre(settings.MajorTopicGenre);
+        ApplyMajorTopicCoverImagePath(settings.MajorTopicCoverImagePath);
 
         TopicTree.SelectByName(settings.LastMajorTopicName, settings.LastMinorTopicName);
         IsSingleView = settings.LastIsSingleView;
@@ -81,10 +87,28 @@ public partial class MainViewModel : ObservableObject
         settings.LastScrollSpeedMultiplier = ContinuousPage.ScrollSpeedMultiplier;
         settings.TopicProgress = CollectTopicProgress();
         settings.MajorTopicRating = CollectMajorTopicRating();
+        settings.MajorTopicGenre = CollectMajorTopicGenre();
+        settings.MajorTopicCoverImagePath = CollectMajorTopicCoverImagePath();
     }
 
     [RelayCommand]
     private void ToggleViewMode() => IsSingleView = !IsSingleView;
+
+    [RelayCommand]
+    private void GoHome() => IsHomeScreen = true;
+
+    /// <summary>홈 화면 카드를 클릭해 해당 대주제를 연다(트리에서 선택+펼침, 홈 화면은 숨긴다).</summary>
+    [RelayCommand]
+    private void OpenMajorTopic(TopicNode? node)
+    {
+        if (node is not { IsMajorTopic: true })
+        {
+            return;
+        }
+
+        TopicTree.SelectedNode = node;
+        IsHomeScreen = false;
+    }
 
     private void OnTopicTreePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -178,4 +202,46 @@ public partial class MainViewModel : ObservableObject
 
     private Dictionary<string, int> CollectMajorTopicRating() =>
         TopicTree.Topics.ToDictionary(major => major.Name, major => major.Rating);
+
+    private void ApplyMajorTopicGenre(Dictionary<string, string>? genres)
+    {
+        if (genres is null || genres.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var major in TopicTree.Topics)
+        {
+            if (genres.TryGetValue(major.Name, out var value))
+            {
+                major.Genre = value;
+            }
+        }
+    }
+
+    private Dictionary<string, string> CollectMajorTopicGenre() =>
+        TopicTree.Topics
+            .Where(major => !string.IsNullOrEmpty(major.Genre))
+            .ToDictionary(major => major.Name, major => major.Genre!);
+
+    private void ApplyMajorTopicCoverImagePath(Dictionary<string, string>? coverPaths)
+    {
+        if (coverPaths is null || coverPaths.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var major in TopicTree.Topics)
+        {
+            if (coverPaths.TryGetValue(major.Name, out var value))
+            {
+                major.CoverImagePath = value;
+            }
+        }
+    }
+
+    private Dictionary<string, string> CollectMajorTopicCoverImagePath() =>
+        TopicTree.Topics
+            .Where(major => !string.IsNullOrEmpty(major.CoverImagePath))
+            .ToDictionary(major => major.Name, major => major.CoverImagePath!);
 }

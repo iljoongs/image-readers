@@ -51,6 +51,8 @@
                                 <ContextMenu>
                                     <MenuItem Header="소주제 추가" Click="AddMinorTopicMenuItem_Click"/>
                                     <MenuItem Header="평점 설정" Click="SetRatingMenuItem_Click"/>
+                                    <MenuItem Header="장르 설정" Click="SetGenreMenuItem_Click"/>
+                                    <MenuItem Header="커버 이미지 설정" Click="SetCoverMenuItem_Click"/>
                                     <Separator/>
                                     <MenuItem Header="이름변경" Click="RenameTopicMenuItem_Click"/>
                                     <MenuItem Header="삭제" Click="DeleteTopicMenuItem_Click"/>

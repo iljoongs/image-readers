@@ -121,6 +121,24 @@ public partial class TopicTreeView : UserControl
         }
     }
 
+    private void SetGenreMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is TopicTreeViewModel viewModel
+            && sender is MenuItem { DataContext: TopicNode node })
+        {
+            viewModel.SetMajorTopicGenreCommand.Execute(node);
+        }
+    }
+
+    private void SetCoverMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is TopicTreeViewModel viewModel
+            && sender is MenuItem { DataContext: TopicNode node })
+        {
+            viewModel.SetMajorTopicCoverCommand.Execute(node);
+        }
+    }
+
     private void RenameTopicMenuItem_Click(object sender, RoutedEventArgs e)
     {
         if (DataContext is TopicTreeViewModel viewModel

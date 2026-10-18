@@ -34,6 +34,14 @@ public class AppSettings
     /// TopicProgress와 동일하게, 이름을 변경하면 키가 달라져 기록이 끊기는 건 알려진 제약이다.
     /// </summary>
     public Dictionary<string, int> MajorTopicRating { get; set; } = new();
+
+    /// <summary>대주제별 장르("/"로 이어붙인 문자열, 팝업 메뉴 "장르 설정" — 04-topic-management.md, 07-ui-layout.md "홈 화면").
+    /// 대주제 이름을 키로 한다. 위 평점과 동일한 이름 변경 제약이 있다.</summary>
+    public Dictionary<string, string> MajorTopicGenre { get; set; } = new();
+
+    /// <summary>대주제별 커버(타이틀) 이미지 경로(`CoverImageStore`가 covers/ 폴더에 복사한 파일, 07-ui-layout.md "홈 화면").
+    /// 대주제 이름을 키로 한다. 위 평점과 동일한 이름 변경 제약이 있다.</summary>
+    public Dictionary<string, string> MajorTopicCoverImagePath { get; set; } = new();
 }
 
 public class TopicProgressEntry
