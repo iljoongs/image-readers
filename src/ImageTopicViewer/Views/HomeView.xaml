@@ -22,7 +22,11 @@
                              (sample.png 참고, 07-ui-layout.md "홈 화면"). 썸네일 위로 이미지를 드래그 앤 드롭해도
                              지정된다(game-platform 프로젝트의 Card_DragOver/Card_Drop과 동일한 방식,
                              DragDropImageHelper 그대로 가져옴). -->
-                        <Border Width="185" Margin="10" Cursor="Hand"
+                        <!-- Background="Transparent": Border/Panel은 Background가 null이면 자기 영역 중
+                             자식이 덮지 않은 빈 칸(썸네일 밑 글자 사이 여백 등)에서는 히트테스트가 안 돼
+                             드래그 드롭/클릭이 씹힌다 — game-platform 카드의 Border.Style도 Background를
+                             Transparent로 깔아 카드 전체를 받는다(2026-10-19 확인: 이 한 줄이 빠져 있었다). -->
+                        <Border Width="185" Margin="10" Cursor="Hand" Background="Transparent"
                                 MouseLeftButtonUp="Card_MouseLeftButtonUp"
                                 AllowDrop="True" DragOver="Card_DragOver" Drop="Card_Drop">
                             <StackPanel>
