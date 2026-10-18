@@ -67,3 +67,7 @@ desktop.ini
 *.log
 *.tmp
 *.bak
+
+# ===== 대주제 썸네일 캐시 (ThumbnailStore) =====
+# 저장소 폴더 바로 밑에 두지만 사용자 썸네일 이미지는 커밋 대상이 아니다.
+/thumbnails/

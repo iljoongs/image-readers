@@ -21,7 +21,7 @@
 - **썸네일**: 지정하는 방법은 두 가지다 — ① 우클릭 메뉴 "썸네일 설정" → 파일 선택 대화상자로 이미지 파일을 고른다. ② 홈 화면 **카드 전체**(썸네일 그림뿐 아니라 제목/장르/화수 텍스트 영역과 그 사이 여백까지) 위로 이미지를 **드래그 앤 드롭**한다(2026-10-19 추가, game-platform 프로젝트의 `Card_DragOver`/`Card_Drop` 방식을 그대로 가져옴 — `DragDropImageHelper`). 로컬 파일뿐 아니라 웹 브라우저에서 드래그한 이미지(URL, `data:` URI, 렌더링된 비트맵, 그리고 아래의 "가상 파일")도 받는다.
   - 카드 루트 `Border`에 `Background="Transparent"`를 명시해야 한다 — WPF의 `Border`/`Panel`은 `Background`가 `null`이면 자식이 덮지 않은 빈 영역에서 히트테스트가 안 돼 그 부분에 드롭(또는 클릭)해도 반응하지 않는다(2026-10-19 수정 — 처음 포팅할 때 이 설정을 빠뜨려서 썸네일 그림 바깥 영역에 드롭하면 조용히 무시됐다). game-platform 카드의 `Border.Style`에도 동일하게 `Background="Transparent"`가 있다.
   - **Microsoft Edge/Chrome에서 웹 이미지를 드래그하면 URL 텍스트 형식 없이 "가상 파일"(`FileGroupDescriptor`/`FileContents`)만 제공하는 경우가 많다**(2026-10-19 수정 — 사용자가 Edge에서 드래그했는데 안 된다고 리포트해서 발견). game-platform의 `DragDropImageHelper`에는 이 처리가 없어서, 이 앱이 이미지 추가 드래그드롭(`05-image-features.md`)에 이미 쓰고 있던 `VirtualFileDropReader`를 가져와 `DragDropImageHelper`에 추가로 연결했다 — URL 텍스트 추출/자체 다운로드보다 먼저 시도한다(브라우저가 이미 받아온 실제 픽셀이라 핫링크 차단 등으로 실패할 일이 적다).
-  - 둘 다 원본 파일 위치와 무관하게 유지되도록 `%APPDATA%\ImageTopicViewer\thumbnails\{대주제 이름}.original{확장자}`로 복사해 보관한다(`ThumbnailStore`, game-platform 프로젝트의 `ThumbnailHelper`와 동일한 저장 방식 — `02-architecture.md` 참조).
+  - 둘 다 원본 파일 위치와 무관하게 유지되도록 `E:\code\image-readers\thumbnails\{대주제 이름}.original{확장자}`로 복사해 보관한다(`ThumbnailStore`, game-platform 프로젝트의 `ThumbnailHelper`와 동일한 저장 방식 — `02-architecture.md` 참조. 저장소 폴더 바로 밑이지만 `.gitignore` 처리되어 있다).
   - 지정 전에는 홈 화면에 연회색 placeholder가 보인다. 자동으로 소주제 이미지를 가져오지는 않는다 — 항상 사용자가 직접 고르거나 드래그해야 한다.
   - **예외적으로 대주제 이름을 바꾸면 썸네일 파일도 같이 옮겨지므로 끊기지 않는다**(파일명 자체가 대주제 이름이라 가능 — 아래 "대주제 이름 변경" 참조).
 

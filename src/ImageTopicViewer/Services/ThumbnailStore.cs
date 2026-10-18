@@ -2,17 +2,16 @@ using System.IO;
 
 namespace ImageTopicViewer.Services;
 
-/// <summary>대주제 썸네일 이미지를 설정 폴더 하위 thumbnails/에 원본 크기 그대로 복사해 보관한다
+/// <summary>대주제 썸네일 이미지를 <see cref="ThumbnailsDirectory"/>에 원본 크기 그대로 복사해 보관한다
 /// (02-architecture.md, 07-ui-layout.md "홈 화면"). 리사이즈본은 만들지 않고, 화면에는 항상 고정 Width/Height +
 /// `ImageLoadHelper`의 DecodePixelWidth로 스케일해서 보여준다 — game-platform 프로젝트의 `ThumbnailHelper`가
 /// 쓰는 방식(원본 그대로 복사 + "{baseName}.original{확장자}" 이름)을 그대로 가져왔다.
 /// 사용자가 고른 원본 파일은 외부 어디에나 있을 수 있어, 삭제/이동되어도 끊기지 않도록 앱 소유 폴더로 복사해 둔다.</summary>
 public static class ThumbnailStore
 {
-    private static readonly string ThumbnailsDirectory = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "ImageTopicViewer",
-        "thumbnails");
+    /// <summary>2026-10-19 사용자 요청으로 %APPDATA%\ImageTopicViewer\thumbnails\에서 이 고정 경로로 옮겼다
+    /// (이 프로젝트 저장소 폴더 바로 밑, .gitignore 처리됨 — 썸네일 이미지는 커밋 대상이 아니다).</summary>
+    private static readonly string ThumbnailsDirectory = @"E:\code\image-readers\thumbnails";
 
     /// <summary>원본 이미지 파일을 thumbnails/ 폴더에 "{대주제 이름}.original{확장자}"로 복사하고 경로를 반환한다.
     /// 대주제 이름은 이미 Windows 폴더/파일명 규칙을 통과한 값이라(`TopicNameValidator`) 파일명으로 그대로
