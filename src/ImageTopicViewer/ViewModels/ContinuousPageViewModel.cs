@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ImageTopicViewer.Models;
@@ -8,22 +9,14 @@ using ImageTopicViewer.Services;
 
 namespace ImageTopicViewer.ViewModels;
 
-/// <summary>확대/축소 배율(%) 선택지. 100%가 원본 크기다.</summary>
-public sealed record ZoomOption(string Label, double Percent);
-
 /// <summary>연속보기 마우스 휠 스크롤 배속 선택지.</summary>
 public sealed record ScrollSpeedOption(string Label, int Multiplier);
 
 public partial class ContinuousPageViewModel : ObservableObject
 {
-    private const double MinZoomPercent = 10;
-    private const double MaxZoomPercent = 250;
-    private const double ZoomStepPercent = 10;
-
-    /// <summary>확대/축소 콤보박스 항목이자 Ctrl+스크롤이 오르내리는 단계 목록 (연속보기/단일보기 공유). 10%~250%, 10% 단위.</summary>
-    public static readonly IReadOnlyList<ZoomOption> ZoomOptions = Enumerable.Range(1, 25)
-        .Select(i => new ZoomOption($"{i * 10}%", i * 10))
-        .ToList();
+    /// <summary>확대/축소 배율 팝업(아래 IsZoomIndicatorVisible)이 마지막 조작 후 떠 있는 시간 — Microsoft Edge의
+    /// 확대/축소 토스트와 같은 동작 (06-view-modes.md "확대/축소").</summary>
+    private static readonly TimeSpan ZoomIndicatorHideDelay = TimeSpan.FromSeconds(1.5);
 
     /// <summary>연속보기 스크롤 배속 콤보박스 항목. x1~x10, 1 단위 (06-view-modes.md).</summary>
     public static readonly IReadOnlyList<ScrollSpeedOption> ScrollSpeedOptions = Enumerable.Range(1, 10)
@@ -32,6 +25,7 @@ public partial class ContinuousPageViewModel : ObservableObject
 
     private readonly IImageStorageService _imageStorageService;
     private readonly IImageSourceProvider _imageSourceProvider;
+    private readonly DispatcherTimer _zoomIndicatorTimer;
     private CancellationTokenSource? _loadCts;
     private TopicNode? _currentMinorTopic;
 
@@ -48,6 +42,11 @@ public partial class ContinuousPageViewModel : ObservableObject
 
     /// <summary>ZoomPercent를 실제 표시 폭(px)으로 환산한 값. Image.Width에 바로 바인딩한다.</summary>
     public double ZoomWidth => ReferenceWidthAt100Percent * ZoomPercent / 100.0;
+
+    /// <summary>Ctrl+스크롤로 배율을 바꾸는 동안/직후 잠깐 떠 있는 배율 팝업(Microsoft Edge 스타일)의 표시 여부
+    /// (07-ui-layout.md "메인 영역"). ZoomIn/ZoomOut이 호출될 때마다 보이고, 일정 시간 조작이 없으면 숨는다.</summary>
+    [ObservableProperty]
+    private bool _isZoomIndicatorVisible;
 
     /// <summary>연속보기 마우스 휠 스크롤 배속. 기본 x1.</summary>
     [ObservableProperty]
@@ -108,6 +107,13 @@ public partial class ContinuousPageViewModel : ObservableObject
     {
         _imageStorageService = imageStorageService;
         _imageSourceProvider = imageSourceProvider;
+
+        _zoomIndicatorTimer = new DispatcherTimer { Interval = ZoomIndicatorHideDelay };
+        _zoomIndicatorTimer.Tick += (_, _) =>
+        {
+            _zoomIndicatorTimer.Stop();
+            IsZoomIndicatorVisible = false;
+        };
     }
 
     [RelayCommand]
@@ -132,13 +138,22 @@ public partial class ContinuousPageViewModel : ObservableObject
         }
     }
 
-    /// <summary>10%p 확대한다. 최대 250%.</summary>
+    /// <summary>Microsoft Edge 단계 목록에서 한 칸 확대한다(최대 500%).</summary>
     [RelayCommand]
-    private void ZoomIn() => ZoomPercent = Math.Min(MaxZoomPercent, ZoomPercent + ZoomStepPercent);
+    private void ZoomIn() => AdjustZoom(1);
 
-    /// <summary>10%p 축소한다. 최소 10%.</summary>
+    /// <summary>Microsoft Edge 단계 목록에서 한 칸 축소한다(최소 25%).</summary>
     [RelayCommand]
-    private void ZoomOut() => ZoomPercent = Math.Max(MinZoomPercent, ZoomPercent - ZoomStepPercent);
+    private void ZoomOut() => AdjustZoom(-1);
+
+    private void AdjustZoom(int direction)
+    {
+        ZoomPercent = EdgeZoomLevels.Step(ZoomPercent, direction);
+
+        IsZoomIndicatorVisible = true;
+        _zoomIndicatorTimer.Stop();
+        _zoomIndicatorTimer.Start();
+    }
 
     [RelayCommand]
     private void GoToPreviousImage()

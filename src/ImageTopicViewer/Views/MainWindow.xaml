@@ -48,14 +48,8 @@
                             Content="{Binding ViewModeToggleLabel}"
                             Command="{Binding ToggleViewModeCommand}"
                             Padding="8,4"/>
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="0,0,12,0"
-                                VerticalAlignment="Center">
-                        <TextBlock Text="크기:" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                        <ComboBox ItemsSource="{x:Static vm:ContinuousPageViewModel.ZoomOptions}"
-                                  DisplayMemberPath="Label" SelectedValuePath="Percent"
-                                  SelectedValue="{Binding ContinuousPage.ZoomPercent, Mode=TwoWay}"
-                                  Width="90"/>
-                    </StackPanel>
+                    <!-- 2026-10-24: "크기" 콤보박스 제거 — Ctrl+스크롤 + 아래 Edge 스타일 팝업으로 대체
+                         (06-view-modes.md "확대/축소"). -->
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="0,0,12,0"
                                 VerticalAlignment="Center"
                                 Visibility="{Binding IsSingleView, Converter={StaticResource InverseBoolToVisibilityConverter}}">
@@ -96,6 +90,25 @@
                                               Visibility="{Binding DataContext.IsSingleView, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
                     <views:SingleImageView DataContext="{Binding ContinuousPage}"
                                            Visibility="{Binding DataContext.IsSingleView, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+                    <!-- Ctrl+스크롤로 확대/축소할 때 Microsoft Edge처럼 상단에 잠깐 떠 있는 배율 팝업
+                         (06-view-modes.md "확대/축소"). ContinuousPageViewModel.IsZoomIndicatorVisible이
+                         조작 시 켜지고 일정 시간 뒤 꺼진다. -->
+                    <Border HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,16,0,0"
+                            Background="#CC202020" CornerRadius="18" Padding="6,2"
+                            Visibility="{Binding ContinuousPage.IsZoomIndicatorVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="-" Width="30" Height="30" Padding="0" FontSize="16" FontWeight="Bold"
+                                    Background="Transparent" Foreground="White" BorderThickness="0"
+                                    Command="{Binding ContinuousPage.ZoomOutCommand}"/>
+                            <TextBlock Text="{Binding ContinuousPage.ZoomPercent, StringFormat={}{0:0}%}"
+                                       Foreground="White" FontSize="13" Width="48" TextAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                            <Button Content="+" Width="30" Height="30" Padding="0" FontSize="16" FontWeight="Bold"
+                                    Background="Transparent" Foreground="White" BorderThickness="0"
+                                    Command="{Binding ContinuousPage.ZoomInCommand}"/>
+                        </StackPanel>
+                    </Border>
                 </Grid>
             </Grid>
         </Grid>

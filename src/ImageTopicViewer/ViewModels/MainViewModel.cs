@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ImageTopicViewer.Models;
@@ -18,19 +19,21 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isHomeScreen = true;
 
-    /// <summary>홈 화면 카드 확대/축소 배율(%). 185x260이 100%다. Microsoft Edge의 확대/축소 단계를 그대로 쓴다
-    /// (07-ui-layout.md "홈 화면"). 세션 간 저장하지 않고 앱을 실행할 때마다 100%로 시작한다.</summary>
-    private static readonly double[] HomeZoomLevels =
-    {
-        25, 33, 50, 67, 75, 80, 90, 100, 110, 125, 150, 175, 200, 250, 300, 400, 500,
-    };
-
+    /// <summary>홈 화면 카드 확대/축소 배율(%). 185x260이 100%다. `EdgeZoomLevels`(Microsoft Edge 단계)를 그대로
+    /// 쓴다 (07-ui-layout.md "홈 화면"). 세션 간 저장하지 않고 앱을 실행할 때마다 100%로 시작한다.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HomeZoomScale))]
     private double _homeZoomPercent = 100;
 
     /// <summary>LayoutTransform에 바로 바인딩하는 배율(1.0 = 100%).</summary>
     public double HomeZoomScale => HomeZoomPercent / 100.0;
+
+    /// <summary>Ctrl+스크롤로 홈 화면 배율을 바꾸는 동안/직후 잠깐 떠 있는 배율 팝업(Microsoft Edge 스타일)의
+    /// 표시 여부 (07-ui-layout.md "홈 화면").</summary>
+    [ObservableProperty]
+    private bool _isHomeZoomIndicatorVisible;
+
+    private readonly DispatcherTimer _homeZoomIndicatorTimer;
 
     public string ViewModeToggleLabel => IsSingleView ? "연속보기로 전환" : "단일보기로 전환";
 
@@ -47,6 +50,13 @@ public partial class MainViewModel : ObservableObject
 
         TopicTree.PropertyChanged += OnTopicTreePropertyChanged;
         ContinuousPage.PropertyChanged += OnContinuousPagePropertyChanged;
+
+        _homeZoomIndicatorTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.5) };
+        _homeZoomIndicatorTimer.Tick += (_, _) =>
+        {
+            _homeZoomIndicatorTimer.Stop();
+            IsHomeZoomIndicatorVisible = false;
+        };
     }
 
     partial void OnIsSingleViewChanged(bool value)
@@ -135,18 +145,11 @@ public partial class MainViewModel : ObservableObject
     /// <summary>홈 화면의 Ctrl+스크롤 확대/축소 — Edge 단계 목록에서 한 칸 위/아래로 이동한다.</summary>
     public void AdjustHomeZoom(int direction)
     {
-        var currentIndex = Array.IndexOf(HomeZoomLevels, HomeZoomPercent);
-        if (currentIndex < 0)
-        {
-            currentIndex = Array.FindIndex(HomeZoomLevels, level => level >= HomeZoomPercent);
-            if (currentIndex < 0)
-            {
-                currentIndex = HomeZoomLevels.Length - 1;
-            }
-        }
+        HomeZoomPercent = EdgeZoomLevels.Step(HomeZoomPercent, direction);
 
-        var newIndex = Math.Clamp(currentIndex + direction, 0, HomeZoomLevels.Length - 1);
-        HomeZoomPercent = HomeZoomLevels[newIndex];
+        IsHomeZoomIndicatorVisible = true;
+        _homeZoomIndicatorTimer.Stop();
+        _homeZoomIndicatorTimer.Start();
     }
 
     [RelayCommand]

@@ -2,7 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid Background="White">
-        <!-- Ctrl+스크롤 확대/축소(Microsoft Edge 단계, MainViewModel.HomeZoomLevels)를 여기서 가로챈다. -->
+        <!-- Ctrl+스크롤 확대/축소(Microsoft Edge 단계, EdgeZoomLevels)를 여기서 가로챈다. -->
         <ScrollViewer x:Name="RootScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                       PreviewMouseWheel="RootScrollViewer_PreviewMouseWheel">
             <!-- LayoutTransform: 측정/배치 단계에서부터 스케일이 적용되어 WrapPanel이 커지거나 작아진 카드
@@ -56,5 +56,24 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
+
+        <!-- Ctrl+스크롤로 홈 화면 배율을 바꿀 때 Microsoft Edge처럼 상단에 잠깐 떠 있는 배율 팝업
+             (07-ui-layout.md "홈 화면"). MainViewModel.IsHomeZoomIndicatorVisible이 조작 시 켜지고
+             일정 시간 뒤 꺼진다. -->
+        <Border HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,16,0,0"
+                Background="#CC202020" CornerRadius="18" Padding="6,2"
+                Visibility="{Binding IsHomeZoomIndicatorVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="-" Width="30" Height="30" Padding="0" FontSize="16" FontWeight="Bold"
+                        Background="Transparent" Foreground="White" BorderThickness="0"
+                        Command="{Binding ZoomHomeOutCommand}"/>
+                <TextBlock Text="{Binding HomeZoomPercent, StringFormat={}{0:0}%}"
+                           Foreground="White" FontSize="13" Width="48" TextAlignment="Center"
+                           VerticalAlignment="Center"/>
+                <Button Content="+" Width="30" Height="30" Padding="0" FontSize="16" FontWeight="Bold"
+                        Background="Transparent" Foreground="White" BorderThickness="0"
+                        Command="{Binding ZoomHomeInCommand}"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </UserControl>
