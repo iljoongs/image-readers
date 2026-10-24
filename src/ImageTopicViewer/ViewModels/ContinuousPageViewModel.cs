@@ -106,6 +106,22 @@ public partial class ContinuousPageViewModel : ObservableObject
     /// <summary>페이지 번호를 직접 입력해 이동했을 때, 연속보기가 그 위치로 스크롤하도록 알린다.</summary>
     public event EventHandler<int>? ScrollToIndexRequested;
 
+    /// <summary>이미지 추가/삭제/순서변경으로 현재 소주제의 내용이 바뀔 때마다 발생한다. `MainViewModel`이
+    /// 이 소주제의 `TopicNode.UpdatedAt`을 `management.json`에 기록하고, 정렬 기준이 "날짜"면 대주제 목록
+    /// 순서를 다시 맞추는 데 쓴다(04-topic-management.md "관리").</summary>
+    public event EventHandler<TopicNode>? MinorTopicContentChanged;
+
+    private void MarkMinorTopicUpdated()
+    {
+        if (_currentMinorTopic is null)
+        {
+            return;
+        }
+
+        _currentMinorTopic.UpdatedAt = DateTime.Now;
+        MinorTopicContentChanged?.Invoke(this, _currentMinorTopic);
+    }
+
     public ContinuousPageViewModel(IImageStorageService imageStorageService, IImageSourceProvider imageSourceProvider)
     {
         _imageStorageService = imageStorageService;
@@ -268,6 +284,7 @@ public partial class ContinuousPageViewModel : ObservableObject
 
         Images.Move(oldIndex, newIndex);
         _imageStorageService.Renumber(_currentMinorTopic, Images.ToList());
+        MarkMinorTopicUpdated();
         OnPropertyChanged(nameof(CurrentItem));
     }
 
@@ -316,6 +333,8 @@ public partial class ContinuousPageViewModel : ObservableObject
             _imageStorageService.Renumber(_currentMinorTopic, Images.ToList());
         }
 
+        MarkMinorTopicUpdated();
+
         ShowEmptyMessage = Images.Count == 0;
         ShowImages = Images.Count > 0;
 
@@ -353,6 +372,8 @@ public partial class ContinuousPageViewModel : ObservableObject
 
         if (newItems.Count > 0)
         {
+            MarkMinorTopicUpdated();
+
             _loadCts?.Cancel();
             _loadCts = new CancellationTokenSource();
             _ = LoadImagesAsync(newItems, _loadCts.Token);

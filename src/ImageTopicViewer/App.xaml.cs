@@ -31,9 +31,11 @@ public partial class App : Application
         var topicRepository = new FileSystemTopicRepository(settingsService.Settings.DataFolderPath!);
         var imageStorageService = new FileSystemImageStorageService();
         var imageSourceProvider = new ImageSourceProvider();
+        var managementService = new ManagementService();
 
-        var mainViewModel = new MainViewModel(topicRepository, imageStorageService, imageSourceProvider);
+        var mainViewModel = new MainViewModel(topicRepository, imageStorageService, imageSourceProvider, managementService);
         mainViewModel.RestoreSession(settingsService.Settings);
+        mainViewModel.RestoreManagementData(managementService.Data);
 
         var mainWindow = new MainWindow(mainViewModel, settingsService);
         mainWindow.Show();

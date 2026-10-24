@@ -39,19 +39,33 @@ public partial class MainViewModel : ObservableObject
     /// (07-ui-layout.md "상단 메뉴").</summary>
     public bool IsContinuousView => !IsSingleView;
 
+    /// <summary>상단 메뉴가 홈 화면이 아닌 뷰어 화면에 있는지. 홈 화면에도 같은 메뉴를 쓰지만(2026-10-24),
+    /// "스크롤"/"이동"/"보기"는 뷰어가 떠 있을 때만 의미가 있어 홈 화면에서는 비활성화한다
+    /// (07-ui-layout.md "상단 메뉴").</summary>
+    public bool IsViewerActive => !IsHomeScreen;
+
+    /// <summary>상단 메뉴 "스크롤"/"이동"이 활성화돼 있는지 — 뷰어 화면이면서 연속보기일 때만.</summary>
+    public bool IsContinuousScrollEnabled => IsViewerActive && IsContinuousView;
+
     /// <summary>타이틀바에 현재 뷰 모드를 표시한다.</summary>
     public string WindowTitle => $"ImageTopicViewer ({(IsSingleView ? "단일보기" : "연속보기")})";
+
+    private readonly IManagementService _managementService;
 
     public MainViewModel(
         ITopicRepository topicRepository,
         IImageStorageService imageStorageService,
-        IImageSourceProvider imageSourceProvider)
+        IImageSourceProvider imageSourceProvider,
+        IManagementService managementService)
     {
+        _managementService = managementService;
+
         TopicTree = new TopicTreeViewModel(topicRepository);
         ContinuousPage = new ContinuousPageViewModel(imageStorageService, imageSourceProvider);
 
         TopicTree.PropertyChanged += OnTopicTreePropertyChanged;
         ContinuousPage.PropertyChanged += OnContinuousPagePropertyChanged;
+        ContinuousPage.MinorTopicContentChanged += OnMinorTopicContentChanged;
 
         _homeZoomIndicatorTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.5) };
         _homeZoomIndicatorTimer.Tick += (_, _) =>
@@ -64,7 +78,43 @@ public partial class MainViewModel : ObservableObject
     partial void OnIsSingleViewChanged(bool value)
     {
         OnPropertyChanged(nameof(IsContinuousView));
+        OnPropertyChanged(nameof(IsContinuousScrollEnabled));
         OnPropertyChanged(nameof(WindowTitle));
+    }
+
+    partial void OnIsHomeScreenChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsViewerActive));
+        OnPropertyChanged(nameof(IsContinuousScrollEnabled));
+    }
+
+    /// <summary>이미지 추가/삭제/순서변경으로 소주제 내용이 바뀔 때마다 그 날짜/시간을 `management.json`에
+    /// 기록하고, 정렬 기준이 "날짜"면 대주제 목록 순서를 다시 맞춘다 (04-topic-management.md "관리").</summary>
+    private void OnMinorTopicContentChanged(object? sender, TopicNode minor)
+    {
+        var major = TopicTree.Topics.FirstOrDefault(t => t.Children.Contains(minor));
+        if (major is not null && minor.UpdatedAt is { } updatedAt)
+        {
+            _managementService.Data.MinorTopicUpdatedAt[GetProgressKey(major, minor)] = updatedAt;
+            _managementService.Save();
+        }
+
+        TopicTree.RefreshSortOrder();
+    }
+
+    /// <summary>앱 시작 시 저장된 소주제별 업데이트 날짜/시간을 복원한다 (04-topic-management.md "관리").</summary>
+    public void RestoreManagementData(TopicManagementData data)
+    {
+        foreach (var major in TopicTree.Topics)
+        {
+            foreach (var minor in major.Children)
+            {
+                if (data.MinorTopicUpdatedAt.TryGetValue(GetProgressKey(major, minor), out var updatedAt))
+                {
+                    minor.UpdatedAt = updatedAt;
+                }
+            }
+        }
     }
 
     /// <summary>앱 시작 시 마지막 세션 상태를 복원한다 (02-architecture.md "세션 상태 저장/복원").</summary>

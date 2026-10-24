@@ -6,4 +6,7 @@ public enum TopicSortKey
 {
     Name,
     Rating,
+
+    /// <summary>대주제 하위 소주제 중 가장 최근에 업데이트된 날짜/시간 기준(04-topic-management.md "관리").</summary>
+    Date,
 }

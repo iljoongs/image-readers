@@ -2,7 +2,6 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:ImageTopicViewer.Views"
-        xmlns:vm="clr-namespace:ImageTopicViewer.ViewModels"
         Title="{Binding WindowTitle}"
         Icon="/Assets/app.ico"
         Width="1000" Height="700">
@@ -29,79 +28,7 @@
                  (06-view-modes.md, 07-ui-layout.md "상단 메뉴"). -->
             <Border Grid.Row="0" Padding="0,2" BorderBrush="#CCCCCC" BorderThickness="0,0,0,1">
                 <DockPanel LastChildFill="False">
-                    <Menu DockPanel.Dock="Left" Background="Transparent" VerticalAlignment="Center">
-                        <MenuItem Header="홈" Command="{Binding GoHomeCommand}"/>
-
-                        <!-- 정렬: Windows 파일 탐색기의 "정렬 기준" 메뉴와 같은 구조 — 기준(이름/평점)과
-                             방향(오름차순/내림차순)을 따로 고른다. -->
-                        <MenuItem Header="정렬">
-                            <MenuItem Header="이름" IsCheckable="True"
-                                      IsChecked="{Binding TopicTree.IsSortByName, Mode=OneWay}"
-                                      Command="{Binding TopicTree.SetSortKeyCommand}"
-                                      CommandParameter="{x:Static vm:TopicSortKey.Name}"/>
-                            <MenuItem Header="평점" IsCheckable="True"
-                                      IsChecked="{Binding TopicTree.IsSortByRating, Mode=OneWay}"
-                                      Command="{Binding TopicTree.SetSortKeyCommand}"
-                                      CommandParameter="{x:Static vm:TopicSortKey.Rating}"/>
-                            <Separator/>
-                            <MenuItem Header="오름차순" IsCheckable="True"
-                                      IsChecked="{Binding TopicTree.IsSortAscending, Mode=OneWay}"
-                                      Command="{Binding TopicTree.SetSortAscendingCommand}"/>
-                            <MenuItem Header="내림차순" IsCheckable="True"
-                                      IsChecked="{Binding TopicTree.IsSortDescending, Mode=OneWay}"
-                                      Command="{Binding TopicTree.SetSortDescendingCommand}"/>
-                        </MenuItem>
-
-                        <!-- 스크롤: 연속보기 마우스 휠 배속 x1~x10, 기본 x6 (06-view-modes.md "연속보기"). -->
-                        <MenuItem Header="스크롤" IsEnabled="{Binding IsContinuousView}">
-                            <MenuItem Header="x1" IsCheckable="True" CommandParameter="1"
-                                      Command="{Binding ContinuousPage.SetScrollSpeedCommand}"
-                                      IsChecked="{Binding ContinuousPage.ScrollSpeedMultiplier, Converter={StaticResource IntEqualsConverter}, ConverterParameter=1, Mode=OneWay}"/>
-                            <MenuItem Header="x2" IsCheckable="True" CommandParameter="2"
-                                      Command="{Binding ContinuousPage.SetScrollSpeedCommand}"
-                                      IsChecked="{Binding ContinuousPage.ScrollSpeedMultiplier, Converter={StaticResource IntEqualsConverter}, ConverterParameter=2, Mode=OneWay}"/>
-                            <MenuItem Header="x3" IsCheckable="True" CommandParameter="3"
-                                      Command="{Binding ContinuousPage.SetScrollSpeedCommand}"
-                                      IsChecked="{Binding ContinuousPage.ScrollSpeedMultiplier, Converter={StaticResource IntEqualsConverter}, ConverterParameter=3, Mode=OneWay}"/>
-                            <MenuItem Header="x4" IsCheckable="True" CommandParameter="4"
-                                      Command="{Binding ContinuousPage.SetScrollSpeedCommand}"
-                                      IsChecked="{Binding ContinuousPage.ScrollSpeedMultiplier, Converter={StaticResource IntEqualsConverter}, ConverterParameter=4, Mode=OneWay}"/>
-                            <MenuItem Header="x5" IsCheckable="True" CommandParameter="5"
-                                      Command="{Binding ContinuousPage.SetScrollSpeedCommand}"
-                                      IsChecked="{Binding ContinuousPage.ScrollSpeedMultiplier, Converter={StaticResource IntEqualsConverter}, ConverterParameter=5, Mode=OneWay}"/>
-                            <MenuItem Header="x6" IsCheckable="True" CommandParameter="6"
-                                      Command="{Binding ContinuousPage.SetScrollSpeedCommand}"
-                                      IsChecked="{Binding ContinuousPage.ScrollSpeedMultiplier, Converter={StaticResource IntEqualsConverter}, ConverterParameter=6, Mode=OneWay}"/>
-                            <MenuItem Header="x7" IsCheckable="True" CommandParameter="7"
-                                      Command="{Binding ContinuousPage.SetScrollSpeedCommand}"
-                                      IsChecked="{Binding ContinuousPage.ScrollSpeedMultiplier, Converter={StaticResource IntEqualsConverter}, ConverterParameter=7, Mode=OneWay}"/>
-                            <MenuItem Header="x8" IsCheckable="True" CommandParameter="8"
-                                      Command="{Binding ContinuousPage.SetScrollSpeedCommand}"
-                                      IsChecked="{Binding ContinuousPage.ScrollSpeedMultiplier, Converter={StaticResource IntEqualsConverter}, ConverterParameter=8, Mode=OneWay}"/>
-                            <MenuItem Header="x9" IsCheckable="True" CommandParameter="9"
-                                      Command="{Binding ContinuousPage.SetScrollSpeedCommand}"
-                                      IsChecked="{Binding ContinuousPage.ScrollSpeedMultiplier, Converter={StaticResource IntEqualsConverter}, ConverterParameter=9, Mode=OneWay}"/>
-                            <MenuItem Header="x10" IsCheckable="True" CommandParameter="10"
-                                      Command="{Binding ContinuousPage.SetScrollSpeedCommand}"
-                                      IsChecked="{Binding ContinuousPage.ScrollSpeedMultiplier, Converter={StaticResource IntEqualsConverter}, ConverterParameter=10, Mode=OneWay}"/>
-                        </MenuItem>
-
-                        <!-- 이동: 연속보기에서만 의미가 있으므로 단일보기에서는 비활성화한다. -->
-                        <MenuItem Header="이동" IsEnabled="{Binding IsContinuousView}">
-                            <MenuItem Header="맨 위로" Command="{Binding ContinuousPage.ScrollToTopCommand}"/>
-                            <MenuItem Header="맨 아래로" Command="{Binding ContinuousPage.ScrollToBottomCommand}"/>
-                        </MenuItem>
-
-                        <!-- 보기: 단일보기/이어보기(연속보기) 중 하나를 고른다. -->
-                        <MenuItem Header="보기">
-                            <MenuItem Header="단일보기" IsCheckable="True"
-                                      IsChecked="{Binding IsSingleView, Mode=OneWay}"
-                                      Command="{Binding SetSingleViewCommand}"/>
-                            <MenuItem Header="이어보기" IsCheckable="True"
-                                      IsChecked="{Binding IsContinuousView, Mode=OneWay}"
-                                      Command="{Binding SetContinuousViewCommand}"/>
-                        </MenuItem>
-                    </Menu>
+                    <views:MainMenuView DockPanel.Dock="Left"/>
 
                     <!-- 맨 뒤: 현재 페이지 번호(1부터) / 전체. 직접 입력 가능한 텍스트박스라 메뉴 항목으로
                          바꾸지 않고 그대로 둔다. -->

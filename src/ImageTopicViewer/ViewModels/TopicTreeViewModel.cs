@@ -23,6 +23,7 @@ public partial class TopicTreeViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsSortByName))]
     [NotifyPropertyChangedFor(nameof(IsSortByRating))]
+    [NotifyPropertyChangedFor(nameof(IsSortByDate))]
     private TopicSortKey _sortKey = TopicSortKey.Name;
 
     /// <summary>정렬 방향. 기준이 이름이면 대주제와 소주제 모두에 적용되고, 기준이 평점이면 대주제 목록에만
@@ -34,6 +35,8 @@ public partial class TopicTreeViewModel : ObservableObject
     public bool IsSortByName => SortKey == TopicSortKey.Name;
 
     public bool IsSortByRating => SortKey == TopicSortKey.Rating;
+
+    public bool IsSortByDate => SortKey == TopicSortKey.Date;
 
     public bool IsSortAscending => !IsSortDescending;
 
@@ -86,23 +89,48 @@ public partial class TopicTreeViewModel : ObservableObject
         ApplySortedOrder(Topics, sorted);
     }
 
-    /// <summary>새 대주제 추가/이름변경/평점 변경 후, 현재 선택된 정렬 기준(SortKey)과 방향(IsSortDescending)으로
-    /// 대주제 목록의 위치를 다시 맞춘다. 기준이 이름이면 각 대주제의 소주제 목록도 같은 방향으로 다시 맞춘다.</summary>
+    /// <summary>날짜 기준으로 대주제 목록(Topics)만 정렬한다(소주제 목록엔 적용 안 함). 각 대주제의 값은 하위
+    /// 소주제 중 가장 최근 업데이트 날짜/시간(`TopicNode.UpdatedAt`, 04-topic-management.md "관리")이고, 기록이
+    /// 하나도 없는 대주제는 가장 오래된 것으로 취급해 뒤로 보낸다. 값이 같으면 이름으로 2차 정렬한다.</summary>
+    private void SortTopicsByUpdatedAt()
+    {
+        var sorted = IsSortDescending
+            ? Topics.OrderByDescending(GetLatestUpdatedAt).ThenBy(n => n.Name, NaturalStringComparer.Instance).ToList()
+            : Topics.OrderBy(GetLatestUpdatedAt).ThenBy(n => n.Name, NaturalStringComparer.Instance).ToList();
+
+        ApplySortedOrder(Topics, sorted);
+    }
+
+    private static DateTime GetLatestUpdatedAt(TopicNode major) =>
+        major.Children.Select(c => c.UpdatedAt).Where(d => d.HasValue).Select(d => d!.Value)
+            .DefaultIfEmpty(DateTime.MinValue).Max();
+
+    /// <summary>새 대주제 추가/이름변경/평점 변경/소주제 내용 변경 후, 현재 선택된 정렬 기준(SortKey)과
+    /// 방향(IsSortDescending)으로 대주제 목록의 위치를 다시 맞춘다. 기준이 이름이면 각 대주제의 소주제 목록도
+    /// 같은 방향으로 다시 맞춘다.</summary>
     private void ApplyCurrentSort()
     {
-        if (SortKey == TopicSortKey.Rating)
+        switch (SortKey)
         {
-            SortTopicsByRating();
-        }
-        else
-        {
-            SortCollection(Topics);
-            foreach (var major in Topics)
-            {
-                SortCollection(major.Children);
-            }
+            case TopicSortKey.Rating:
+                SortTopicsByRating();
+                break;
+            case TopicSortKey.Date:
+                SortTopicsByUpdatedAt();
+                break;
+            default:
+                SortCollection(Topics);
+                foreach (var major in Topics)
+                {
+                    SortCollection(major.Children);
+                }
+                break;
         }
     }
+
+    /// <summary>외부(소주제 내용 변경 등 — `MainViewModel`)에서 현재 정렬 기준으로 대주제 목록 순서를 다시
+    /// 맞추도록 요청한다.</summary>
+    public void RefreshSortOrder() => ApplyCurrentSort();
 
     private static void ApplySortedOrder(ObservableCollection<TopicNode> collection, List<TopicNode> sorted)
     {

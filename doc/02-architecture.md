@@ -29,6 +29,7 @@ ImageTopicViewer/
 │       │   ├── IImageStorageService.cs  // 이미지 저장/이동/재넘버링/포맷 변환
 │       │   ├── IImageSourceProvider.cs  // 뷰에 표시할 이미지 소스 제공 (비동기 로딩, 추후 캐싱 확장 지점)
 │       │   ├── ISettingsService.cs      // 데이터 폴더 경로 읽기/쓰기 (03 참조)
+│       │   ├── IManagementService.cs    // 소주제 업데이트 날짜 등 관리 데이터 읽기/쓰기 (management.json)
 │       │   └── FileSystemTopicRepository.cs
 │       └── Converters/
 └── doc/
@@ -63,6 +64,7 @@ ImageTopicViewer/
 
 ## 핵심 서비스 책임
 - **ISettingsService**: 데이터 폴더 경로, 창 상태, 마지막 세션 상태(선택 주제/뷰 모드/스크롤 위치)를 포함한 앱 설정을 `%APPDATA%\ImageTopicViewer\settings.json`에서 읽고 쓴다. 최초 실행 여부 판단(설정 파일 부재 시 폴더 선택 다이얼로그 트리거)도 담당. 창 상태와 세션 상태는 앱 종료 시(`MainWindow.Closing`) 저장한다.
+- **IManagementService**(2026-10-24 추가): `ISettingsService`와 같은 패턴으로 `%APPDATA%\ImageTopicViewer\management.json`을 읽고 쓰지만, 내용은 settings.json과 분리된 "관리" 데이터뿐이다 — 현재는 소주제별 업데이트 날짜/시간(`TopicManagementData.MinorTopicUpdatedAt`, "{대주제}/{소주제}" 키, `04-topic-management.md` "관리"). 앱 종료를 기다리지 않고 값이 바뀔 때마다(`MainViewModel.OnMinorTopicContentChanged`) 즉시 저장한다.
 - **ITopicRepository**: 설정에 저장된 데이터 폴더를 스캔하여 대주제/소주제 트리를 구성. 주제 추가/삭제(휴지통 이동)/이름변경(폴더 rename + 내부 파일 재넘버링 트리거) 담당.
 - **IImageStorageService**: 이미지 파일 이동, PNG 포맷 통일 변환, 파일명 규칙 적용, 순서 변경/삭제(휴지통 이동) 시 재넘버링 로직 담당. (상세는 `03-data-storage.md` 참조)
   - 삭제는 영구 삭제가 아니라 **Windows 휴지통으로 이동**한다 (`Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile`/`DeleteDirectory`의 `RecycleOption.SendToRecycleBin` 사용 검토).

@@ -50,6 +50,13 @@ public partial class TopicNode : ObservableObject
     [ObservableProperty]
     private string? _lastViewedMinorName;
 
+    /// <summary>이 소주제의 이미지가 마지막으로 추가/삭제/순서변경된 날짜/시간. null이면 기록 없음(이 기능이
+    /// 생기기 전부터 있던 소주제이거나 아직 내용이 바뀐 적 없음) — 상단 메뉴 "정렬 > 날짜"에서 대주제를 정렬할 때
+    /// 쓴다(대주제 값은 하위 소주제 중 가장 최근 값). `management.json`에 저장되며 settings.json과는 별도로
+    /// 관리된다(04-topic-management.md "관리"). 대주제는 사용하지 않는다.</summary>
+    [ObservableProperty]
+    private DateTime? _updatedAt;
+
     public string FullPath { get; set; }
     public bool IsMajorTopic { get; init; }
 
