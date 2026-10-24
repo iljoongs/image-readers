@@ -35,7 +35,9 @@ public partial class MainViewModel : ObservableObject
 
     private readonly DispatcherTimer _homeZoomIndicatorTimer;
 
-    public string ViewModeToggleLabel => IsSingleView ? "연속보기로 전환" : "단일보기로 전환";
+    /// <summary>상단 메뉴 "보기 > 이어보기"가 선택되어 있는지. "단일보기"는 IsSingleView 그대로 쓴다
+    /// (07-ui-layout.md "상단 메뉴").</summary>
+    public bool IsContinuousView => !IsSingleView;
 
     /// <summary>타이틀바에 현재 뷰 모드를 표시한다.</summary>
     public string WindowTitle => $"ImageTopicViewer ({(IsSingleView ? "단일보기" : "연속보기")})";
@@ -61,7 +63,7 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnIsSingleViewChanged(bool value)
     {
-        OnPropertyChanged(nameof(ViewModeToggleLabel));
+        OnPropertyChanged(nameof(IsContinuousView));
         OnPropertyChanged(nameof(WindowTitle));
     }
 
@@ -118,7 +120,10 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ToggleViewMode() => IsSingleView = !IsSingleView;
+    private void SetSingleView() => IsSingleView = true;
+
+    [RelayCommand]
+    private void SetContinuousView() => IsSingleView = false;
 
     [RelayCommand]
     private void GoHome() => IsHomeScreen = true;

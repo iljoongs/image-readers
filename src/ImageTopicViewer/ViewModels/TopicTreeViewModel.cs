@@ -11,31 +11,31 @@ namespace ImageTopicViewer.ViewModels;
 
 public partial class TopicTreeViewModel : ObservableObject
 {
-    /// <summary>대주제 목록(Topics)에 마지막으로 적용된 정렬 기준. 소주제 목록은 항상 이름 기준으로만 정렬된다
-    /// (평점은 대주제에만 있는 값이라 소주제 정렬에는 의미가 없음).</summary>
-    private enum TopicSortMode
-    {
-        Name,
-        Rating,
-    }
-
     private readonly ITopicRepository _repository;
-    private TopicSortMode _activeSortMode = TopicSortMode.Name;
 
     public ObservableCollection<TopicNode> Topics { get; }
 
     [ObservableProperty]
     private TopicNode? _selectedNode;
 
+    /// <summary>상단 메뉴 "정렬"에서 고른 정렬 기준(이름/평점). Windows 파일 탐색기의 "정렬 기준" 메뉴처럼
+    /// 기준과 방향(IsSortDescending)을 따로 고른다 (07-ui-layout.md "상단 메뉴").</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSortByName))]
+    [NotifyPropertyChangedFor(nameof(IsSortByRating))]
+    private TopicSortKey _sortKey = TopicSortKey.Name;
+
+    /// <summary>정렬 방향. 기준이 이름이면 대주제와 소주제 모두에 적용되고, 기준이 평점이면 대주제 목록에만
+    /// 적용된다(평점은 대주제 전용 값).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSortAscending))]
     private bool _isSortDescending;
 
-    [ObservableProperty]
-    private bool _isRatingSortDescending;
+    public bool IsSortByName => SortKey == TopicSortKey.Name;
 
-    public string SortToggleLabel => IsSortDescending ? "이름 오름차순 정렬" : "이름 내림차순 정렬";
+    public bool IsSortByRating => SortKey == TopicSortKey.Rating;
 
-    public string RatingSortToggleLabel => IsRatingSortDescending ? "평점 오름차순 정렬" : "평점 내림차순 정렬";
+    public bool IsSortAscending => !IsSortDescending;
 
     public TopicTreeViewModel(ITopicRepository repository)
     {
@@ -52,37 +52,18 @@ public partial class TopicTreeViewModel : ObservableObject
         }
     }
 
-    partial void OnIsSortDescendingChanged(bool value)
-    {
-        OnPropertyChanged(nameof(SortToggleLabel));
+    partial void OnSortKeyChanged(TopicSortKey value) => ApplyCurrentSort();
 
-        SortCollection(Topics);
-        foreach (var major in Topics)
-        {
-            SortCollection(major.Children);
-        }
-    }
-
-    partial void OnIsRatingSortDescendingChanged(bool value)
-    {
-        OnPropertyChanged(nameof(RatingSortToggleLabel));
-
-        SortTopicsByRating();
-    }
+    partial void OnIsSortDescendingChanged(bool value) => ApplyCurrentSort();
 
     [RelayCommand]
-    private void ToggleSortOrder()
-    {
-        _activeSortMode = TopicSortMode.Name;
-        IsSortDescending = !IsSortDescending;
-    }
+    private void SetSortKey(TopicSortKey key) => SortKey = key;
 
     [RelayCommand]
-    private void ToggleRatingSortOrder()
-    {
-        _activeSortMode = TopicSortMode.Rating;
-        IsRatingSortDescending = !IsRatingSortDescending;
-    }
+    private void SetSortAscending() => IsSortDescending = false;
+
+    [RelayCommand]
+    private void SetSortDescending() => IsSortDescending = true;
 
     /// <summary>이름 기준으로 정렬하되, ObservableCollection.Move로 재배치해 IsExpanded/IsSelected 등 상태를 보존한다.</summary>
     private void SortCollection(ObservableCollection<TopicNode> collection)
@@ -98,24 +79,28 @@ public partial class TopicTreeViewModel : ObservableObject
     /// 값이 같으면 이름으로 2차 정렬한다.</summary>
     private void SortTopicsByRating()
     {
-        var sorted = IsRatingSortDescending
+        var sorted = IsSortDescending
             ? Topics.OrderByDescending(n => n.Rating).ThenBy(n => n.Name, NaturalStringComparer.Instance).ToList()
             : Topics.OrderBy(n => n.Rating).ThenBy(n => n.Name, NaturalStringComparer.Instance).ToList();
 
         ApplySortedOrder(Topics, sorted);
     }
 
-    /// <summary>새 대주제 추가/이름변경/평점 변경 후, 마지막으로 눌렀던 정렬 버튼(이름 또는 평점) 기준으로 대주제
-    /// 목록의 위치를 다시 맞춘다.</summary>
-    private void ResortTopics()
+    /// <summary>새 대주제 추가/이름변경/평점 변경 후, 현재 선택된 정렬 기준(SortKey)과 방향(IsSortDescending)으로
+    /// 대주제 목록의 위치를 다시 맞춘다. 기준이 이름이면 각 대주제의 소주제 목록도 같은 방향으로 다시 맞춘다.</summary>
+    private void ApplyCurrentSort()
     {
-        if (_activeSortMode == TopicSortMode.Rating)
+        if (SortKey == TopicSortKey.Rating)
         {
             SortTopicsByRating();
         }
         else
         {
             SortCollection(Topics);
+            foreach (var major in Topics)
+            {
+                SortCollection(major.Children);
+            }
         }
     }
 
@@ -152,7 +137,7 @@ public partial class TopicTreeViewModel : ObservableObject
         {
             var node = _repository.CreateMajorTopic(dialog.InputText);
             Topics.Add(node);
-            ResortTopics();
+            ApplyCurrentSort();
         }
         catch (ArgumentException ex)
         {
@@ -210,11 +195,7 @@ public partial class TopicTreeViewModel : ObservableObject
         if (dialog.ShowDialog() == true)
         {
             node.Rating = dialog.SelectedValue;
-
-            if (_activeSortMode == TopicSortMode.Rating)
-            {
-                SortTopicsByRating();
-            }
+            ApplyCurrentSort();
         }
     }
 
@@ -337,7 +318,7 @@ public partial class TopicTreeViewModel : ObservableObject
         // 이름이 바뀌었으니 정렬 순서상 위치도 다시 맞춘다.
         if (node.IsMajorTopic)
         {
-            ResortTopics();
+            ApplyCurrentSort();
         }
         else
         {

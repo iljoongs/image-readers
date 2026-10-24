@@ -20,8 +20,8 @@ public class AppSettings
     /// <summary>확대/축소 배율(%). 100 = 원본 크기 (06-view-modes.md "확대/축소").</summary>
     public double LastZoomPercent { get; set; } = 100;
 
-    /// <summary>연속보기 마우스 휠 스크롤 배속(x1~x10). 기본 x1 (06-view-modes.md "연속보기").</summary>
-    public int LastScrollSpeedMultiplier { get; set; } = 1;
+    /// <summary>연속보기 마우스 휠 스크롤 배속(x1~x10). 기본 x6 (06-view-modes.md "연속보기").</summary>
+    public int LastScrollSpeedMultiplier { get; set; } = 6;
 
     /// <summary>
     /// 소주제별로 마지막으로 보던 이미지 위치를 기억한다 ("{대주제}/{소주제}" 키, 07-ui-layout.md "주제 트리").

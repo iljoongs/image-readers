@@ -9,19 +9,11 @@ using ImageTopicViewer.Services;
 
 namespace ImageTopicViewer.ViewModels;
 
-/// <summary>연속보기 마우스 휠 스크롤 배속 선택지.</summary>
-public sealed record ScrollSpeedOption(string Label, int Multiplier);
-
 public partial class ContinuousPageViewModel : ObservableObject
 {
     /// <summary>확대/축소 배율 팝업(아래 IsZoomIndicatorVisible)이 마지막 조작 후 떠 있는 시간 — Microsoft Edge의
     /// 확대/축소 토스트와 같은 동작 (06-view-modes.md "확대/축소").</summary>
     private static readonly TimeSpan ZoomIndicatorHideDelay = TimeSpan.FromSeconds(1.5);
-
-    /// <summary>연속보기 스크롤 배속 콤보박스 항목. x1~x10, 1 단위 (06-view-modes.md).</summary>
-    public static readonly IReadOnlyList<ScrollSpeedOption> ScrollSpeedOptions = Enumerable.Range(1, 10)
-        .Select(i => new ScrollSpeedOption($"x{i}", i))
-        .ToList();
 
     private readonly IImageStorageService _imageStorageService;
     private readonly IImageSourceProvider _imageSourceProvider;
@@ -48,9 +40,20 @@ public partial class ContinuousPageViewModel : ObservableObject
     [ObservableProperty]
     private bool _isZoomIndicatorVisible;
 
-    /// <summary>연속보기 마우스 휠 스크롤 배속. 기본 x1.</summary>
+    /// <summary>연속보기 마우스 휠 스크롤 배속. 기본 x6(2026-10-24, 상단 메뉴 "스크롤"로 전환하며 변경 —
+    /// 07-ui-layout.md "상단 메뉴").</summary>
     [ObservableProperty]
-    private int _scrollSpeedMultiplier = 1;
+    private int _scrollSpeedMultiplier = 6;
+
+    /// <summary>상단 메뉴 "스크롤" 하위 항목(x1~x10) 클릭 시 호출된다.</summary>
+    [RelayCommand]
+    private void SetScrollSpeed(string value)
+    {
+        if (int.TryParse(value, out var multiplier))
+        {
+            ScrollSpeedMultiplier = multiplier;
+        }
+    }
 
     [ObservableProperty]
     private bool _showNoSelectionMessage = true;

@@ -9,5 +9,6 @@
         <conv:MajorTopicRatingColorConverter x:Key="MajorTopicRatingColorConverter"/>
         <conv:RatingStarWidthConverter x:Key="RatingStarWidthConverter"/>
         <conv:ThumbnailBrushConverter x:Key="ThumbnailBrushConverter"/>
+        <conv:IntEqualsConverter x:Key="IntEqualsConverter"/>
     </Application.Resources>
 </Application>
