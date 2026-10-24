@@ -24,6 +24,7 @@
 | [doc/06-view-modes.md](doc/06-view-modes.md) | 연속보기/단일보기 모드, 좌우 네비게이션 |
 | [doc/07-ui-layout.md](doc/07-ui-layout.md) | 전체 화면 레이아웃, 주요 컨트롤 구성 |
 | [doc/08-open-decisions.md](doc/08-open-decisions.md) | 아직 결정되지 않은 항목, 향후 확장 아이디어 |
+| [doc/09-edge-style-zoom-pattern.md](doc/09-edge-style-zoom-pattern.md) | Microsoft Edge 스타일 확대/축소(단계 목록+Ctrl휠+팝업) 구현을 다른 프로젝트에 이식하는 방법 |
 
 ## 작업 원칙
 1. 각 기능 구현 전 해당 보조 지시서를 먼저 확인한다.

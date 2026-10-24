@@ -35,7 +35,7 @@ public partial class ContinuousPageViewModel : ObservableObject
     /// (실제 해상도를 기준으로 하면 스캔본마다 해상도가 달라 100%가 창보다 훨씬 크거나 작게 나올 수 있다.)</summary>
     private const double ReferenceWidthAt100Percent = 800;
 
-    /// <summary>현재 확대/축소 배율(%). 100 = 기준 폭(800px) 그대로. 콤보박스와 Ctrl+스크롤이 값을 공유한다.</summary>
+    /// <summary>현재 확대/축소 배율(%). 100 = 기준 폭(800px) 그대로. Ctrl+스크롤로만 바뀐다(06-view-modes.md "확대/축소").</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ZoomWidth))]
     private double _zoomPercent = 100;
